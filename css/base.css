@@ -1,0 +1,9 @@
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 var(--font-body)}
+button,input,textarea,select{font:inherit;color:inherit}
+a{color:var(--lane)}
+a:hover{color:var(--ink)}
+:focus-visible{outline:3px solid var(--lane);outline-offset:2px;border-radius:6px}
+details summary{list-style:revert}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}
+}

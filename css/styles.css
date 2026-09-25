@@ -1,0 +1,75 @@
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&display=swap");
+/* Dojo loads Barlow + Barlow Condensed from Google Fonts (as the source app does). No self-hosted binaries exist in the source. */
+:root{
+  --font-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+}
+
+/* Base palette — names copied verbatim from Dojo/index.html so kit code reads 1:1 */
+:root{
+  --paper:#F5F7FA; --card:#FFFFFF; --ink:#1B2A4A; --ink-2:#51607D; --line:#D9DFEA;
+  --lane:#2E5AAC; --done:#F2C230; --done-ink:#3D2E00; --light:#8FC3EE; --missed:#E0526B;
+  --rest:#B8C1D1; --run:#2E5AAC; --walk:#3A9A7A; --finish:#E0526B;
+  --on-lane:#FFFFFF;
+  --backdrop:rgba(15,22,38,.45);
+  /* Semantic aliases */
+  --surface-page:var(--paper); --surface-card:var(--card); --surface-raised:var(--paper);
+  --text-body:var(--ink); --text-muted:var(--ink-2); --text-on-ink:var(--paper); --text-on-done:var(--done-ink);
+  --border-default:var(--line); --border-hover:var(--ink-2); --border-active:var(--ink); --border-today:var(--lane);
+  --accent-primary:var(--lane); --accent-done:var(--done);
+  --status-done:var(--done); --status-light:var(--light); --status-missed:var(--missed); --status-rest:var(--rest);
+  --kind-run:var(--run); --kind-walk:var(--walk); --kind-rest:var(--ink-2); --kind-finish:var(--finish);
+  /* Tints (the source uses color-mix; values kept as expressions) */
+  --tint-done:color-mix(in srgb,var(--done) 18%,var(--card));
+  --tint-done-soft:color-mix(in srgb,var(--done) 14%,var(--card));
+  --tint-ink:color-mix(in srgb,var(--ink) 6%,transparent);
+  --tint-ink-strong:color-mix(in srgb,var(--ink) 10%,var(--paper));
+  --tint-missed:color-mix(in srgb,var(--missed) 20%,transparent);
+  --strip-1:color-mix(in srgb,var(--done) 40%,var(--line));
+  --strip-2:color-mix(in srgb,var(--done) 70%,var(--line));
+}
+/* Dark theme: opt in with <html data-theme="dark">. (The source app also auto-switches on prefers-color-scheme with the same values.) */
+:root[data-theme="dark"]{
+  --paper:#0F1626; --card:#172036; --ink:#E6ECF7; --ink-2:#9DAAC4; --line:#2A3654;
+  --lane:#6D9AF0; --done:#F2C230; --done-ink:#2A2000; --light:#5E9FD6; --missed:#EE6B82;
+  --rest:#55627E; --run:#6D9AF0; --walk:#52C29B; --finish:#EE6B82;
+}
+
+:root{
+  --text-base:16px; --leading-body:1.5;
+  --tracking-display:.01em;
+  /* Display (Barlow Condensed) ladder — exact sizes used in the app */
+  --display-h1:44px;      /* page title, 800, line-height 1 */
+  --display-stat:36px;    /* stat value, 800, lh 1 */
+  --display-h2-lg:34px;   /* month title in sheet bar */
+  --display-h2:30px;      /* plan heading, lh 1.1 */
+  --display-day:26px;     /* run-plan day number, 800 */
+  --display-h2-sm:24px;   /* check-in / dialog heading */
+  --display-week:22px;    /* week label */
+  --display-summary:20px; /* details summary, stage title, week tally */
+  --display-h3:18px;      /* rule heading, tally */
+  --display-h4:17px;      /* dialog section, sheet day number */
+  --display-label:14px;   /* kind label, dow header */
+  --display-chip:13px;    /* run chip, runner pill */
+  --display-tag:11px;     /* "Today" tag */
+  /* Body (Barlow) */
+  --body-motto:17px; --body-md:15px; --body-sm:14px; --body-xs:13px; --body-2xs:12px; --body-3xs:11px; --body-4xs:10px;
+  --weight-regular:400; --weight-medium:500; --weight-semibold:600; --weight-bold:700; --weight-black:800;
+}
+
+:root{
+  --space-1:2px; --space-2:4px; --space-3:6px; --space-4:8px; --space-5:10px; --space-6:12px; --space-7:14px; --space-8:16px; --space-9:18px; --space-10:20px; --space-12:48px;
+  --page-max:1080px; --page-pad:20px 16px 48px;
+  --radius-xs:6px; --radius-sm:10px; --radius-md:12px; --radius-lg:14px; --radius-xl:18px; --radius-pill:99px;
+  --stroke-thin:1px; --stroke-default:1.5px; --stroke-strong:2px; --stroke-rule:3px;
+  --control-sm:24px; --control-md:32px; --control-lg:40px; --hit-min:44px;
+}
+
+:root{
+  --shadow:0 1px 0 rgba(27,42,74,.06);
+  --shadow-dialog:0 20px 50px rgba(0,0,0,.3);
+  --focus-ring:3px solid var(--lane); --focus-offset:2px;
+  --motion-ui:.15s; /* @kind other */
+  --motion-progress:.5s ease; /* @kind other */
+}
+
