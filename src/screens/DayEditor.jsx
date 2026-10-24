@@ -1,17 +1,18 @@
-const { Dialog, DialogSection, StateGrid, Pill, Field } = window.DojoDesignSystem_c9e716;
-const { STATES, iso, fmtDate, runIdx } = window.DojoKitData;
+import React from "react";
+import { DS, TODAY } from "../env.js";
+import { STATES, parseISO, fmtDate, runIdx, runInfo, pfHelpers } from "../logic.js";
+const { Dialog, DialogSection, StateGrid, Pill, Field } = DS;
 
-function DayEditor({ state, day, onClose, onSave, onClear }) {
-  const [y, m] = state.month.split("-").map(Number); const date = new Date(y, m - 1, day), k = iso(date);
-  const md = state.months[state.month] || { days: {} }; const e = md.days[day] || {}, pk = state.pf.days[k] || {};
-  const ri = runIdx(date);
-  const [ed, setEd] = React.useState({ s: e.s || null, m: e.m || "", run: ri >= 0 ? !!state.run.done[ri + 1] : null, sets: pk.sets || 0, practice: pk.practice ?? null, pauses: pk.pauses || "", control: pk.control || 0, time: pk.time || "" });
-  const h = window.pfHelpers(state.pf); const test = h.testFor(k);
+export function DayEditor({ state, dayKey: k, onClose, onSave, onClear }) {
+  const date = parseISO(k), e = state.days[k] || {};
+  const ri = runIdx(date, state.plan.start);
+  const [ed, setEd] = React.useState({ s: e.s || null, m: e.m || "", run: ri >= 0 ? !!e.run : null, sets: e.sets || 0, practice: e.practice ?? null, pauses: e.pauses || "", control: e.control || 0, time: e.time || "" });
+  const h = pfHelpers(state.pf, TODAY); const test = h.testFor(k);
   const planned = !!state.pf.start && date >= h.startDate() && (test || h.isPracticeDay(date));
-  const info = ri >= 0 ? window.runInfo(ri, state.run.recovery) : null;
+  const info = ri >= 0 ? runInfo(ri, state.plan.recovery) : null;
   const pills = { display: "flex", gap: 6, flexWrap: "wrap" };
-  const setRun = v => setEd(x => { const n = { ...x, run: v }; if (v && info) { if (!n.s) n.s = info.kind === "rest" && !state.run.recovery ? "rest" : "done"; if (!n.m && info.mins) n.m = info.mins; } return n; });
-  return <Dialog open title={fmtDate(date)} onClose={onClose} onClear={() => onClear(day, k, ri)} onSave={() => onSave(day, k, ri, ed)}>
+  const setRun = v => setEd(x => { const n = { ...x, run: v }; if (v && info) { if (!n.s) n.s = info.kind === "rest" && !state.plan.recovery ? "rest" : "done"; if (!n.m && info.mins) n.m = info.mins; } return n; });
+  return <Dialog open title={fmtDate(date)} onClose={onClose} onClear={() => onClear(k)} onSave={() => onSave(k, ed)}>
     {info && <DialogSection title={`Running plan, day ${ri + 1}`} first>
       <p style={{ fontSize: 14, color: "var(--ink-2)", margin: "0 0 6px" }}>{info.label}: {info.what}{info.extra ? ", " + info.extra : ""}{info.mins ? ` (~${info.mins} min)` : ""}</p>
       <div style={pills}><Pill pressed={ed.run === true} onClick={() => setRun(true)}>Done</Pill><Pill pressed={ed.run === false} onClick={() => setRun(false)}>Not yet</Pill></div></DialogSection>}
@@ -28,4 +29,3 @@ function DayEditor({ state, day, onClose, onSave, onClear }) {
     </DialogSection>
   </Dialog>;
 }
-window.DojoDayEditor = DayEditor;
