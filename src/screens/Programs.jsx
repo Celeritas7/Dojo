@@ -37,7 +37,7 @@ function RunPlanView({ state, setPlan, toggleRun, onPlanAction }) {
   const groups = planWeeks(start ? plan : { start: iso(TODAY) });
   const slots = planSlots(plan), len = planSeq(plan).length, pos = planPos(plan, TODAY), inPlan = !!start && pos >= 0 && pos < len;
   const ri = runIdx(TODAY, plan), week = currentWeekGroup(plan, TODAY);
-  const status = !start ? "Set a start date to put the plan on your calendar."
+  const status = !start ? "Not started yet."
     : pos < 0 ? `Starts in ${-pos} day${pos === -1 ? "" : "s"}.`
     : pos < len ? (ri >= 0 ? `Day ${ri + 1} of ${PLAN_DAYS}${isRepeat(plan, pos) ? ", again" : ""}.` : "Today is a pushed-back day; the plan continues tomorrow.")
     : "The plan has finished. Start again any time, or repeat it from a new date.";
@@ -52,6 +52,10 @@ function RunPlanView({ state, setPlan, toggleRun, onPlanAction }) {
         <Toggle checked={rec} onChange={v => setPlan({ recovery: v })}>Rest days become recovery walks</Toggle>
       </div>
     </div>
+    {!start && <div role="group" aria-labelledby="plan-start-cta" style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", background: "var(--card)", border: "1.5px solid var(--lane)", borderRadius: "var(--radius-lg)", padding: "12px 16px", marginBottom: 14 }}>
+      <p id="plan-start-cta" style={{ margin: 0, flex: 1, minWidth: 200 }}><b>Ready to begin?</b> Start today, or pick another day in Plan start.</p>
+      <Button onClick={() => onPlanAction("start")} style={{ minHeight: 44 }}>Start today</Button>
+    </div>}
     {start && <p id="plan-adjust-hint" style={{ margin: "0 0 6px", color: "var(--ink-2)", fontSize: "var(--text-small)" }}>Week felt hard? Repeat it. Missed today? Push the plan back a day. Every change can be undone.</p>}
     {start && <div role="group" aria-label="Adjust the plan" aria-describedby="plan-adjust-hint" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
       {inPlan && week && <Button variant="ghost" onClick={() => onPlanAction("repeat")} style={{ minHeight: 44 }}>Repeat week {week.week + 1}</Button>}
@@ -67,7 +71,7 @@ function RunPlanView({ state, setPlan, toggleRun, onPlanAction }) {
         <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}><b style={{ font: "700 var(--text-subhead) var(--font-display)", letterSpacing: ".01em" }}>{title}</b>{w && <span style={{ color: "var(--ink-2)", fontSize: "var(--text-small)" }}>{w[1]}</span>}{planned.length > 0 && <span style={{ marginLeft: "auto", font: "700 var(--text-body) var(--font-display)", letterSpacing: ".01em" }}>{wdone}/{planned.length} done</span>}</div>
         {g.slots.map(sl => { if (sl.i === null) return <div key={sl.key} style={{ border: "1.5px dashed var(--line)", borderRadius: "var(--radius-md)", padding: 10, color: "var(--ink-2)", fontSize: "var(--text-small)", display: "flex", flexDirection: "column", gap: 2 }}><b style={{ font: "700 var(--text-body) var(--font-display)", color: "var(--ink)" }}>Pushed back</b>{start && fmtDate(sl.date)}<span>Free day; the plan picks up the next day.</span></div>;
           const n = sl.i + 1, info = runInfo(sl.i, rec);
-          return <DayCard key={sl.key} n={n} date={start ? fmtDate(sl.date) : ""} kind={info.kind} label={info.label} what={info.what + (info.kind === "rest" && rec && n === 20 ? ". Big day tomorrow." : "")} extra={info.extra} mins={info.mins} done={!!(state.days[sl.key] || {}).run} today={!!start && sameDay(sl.date, TODAY)} onClick={() => start && toggleRun(sl.key)} />; })}
+          return <DayCard key={sl.key} n={n} date={start ? fmtDate(sl.date) : ""} kind={info.kind} label={info.label} what={info.what + (info.kind === "rest" && rec && n === 20 ? ". Big day tomorrow." : "")} extra={info.extra} mins={info.mins} done={!!(state.days[sl.key] || {}).run} today={!!start && sameDay(sl.date, TODAY)} onClick={() => start ? toggleRun(sl.key) : onPlanAction("needStart")} />; })}
       </section>; })}
     <div style={statGrid}><Stat value={streak} label="Longest streak" /><Stat value={`${PLAN.filter((p, i) => (p[0] === "run" || p[0] === "finish") && done[i]).length}/${PLAN_RUNS}`} label="Runs completed" /></div>
     <Rules />

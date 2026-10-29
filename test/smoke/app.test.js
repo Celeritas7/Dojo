@@ -321,6 +321,7 @@ test("charts: tooltip on keyboard focus, numbers table, empty state", async () =
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await open(page, "/?demo=1#month/2026-10");
   const fig = page.locator("figure:has-text('Minutes per week')");
+  await fig.locator("rect[role=img]").first().waitFor();
   await fig.locator("rect[aria-label^='Week of Mon 5 Oct']").focus();
   await fig.locator("div[aria-hidden=true]:has-text('154 minutes')").waitFor();
   await fig.locator("summary:has-text('Show numbers')").click();
@@ -330,6 +331,8 @@ test("charts: tooltip on keyboard focus, numbers table, empty state", async () =
   await page.locator("figure:has-text('No minutes logged in these weeks yet')").waitFor();
   await open(page, "/?demo=1#programs/pf");
   const ctl = page.locator("figure:has-text('Control over time')");
+  // Charts draw after measuring their width (ResizeObserver), so wait for the marks before counting them.
+  await ctl.locator("circle").first().waitFor();
   assert.equal(await ctl.locator("circle").count(), 12, "last 12 rated sessions");
   await ctl.locator("rect[role=img]").last().focus();
   await ctl.locator("div[aria-hidden=true]:has-text('/ 5')").waitFor();
@@ -445,5 +448,30 @@ test("performance budget: first load under 350 KB", async () => {
   await open(page, "/?demo=1"); await page.waitForLoadState("networkidle");
   assert.ok(bytes <= 350 * 1024, `first load was ${(bytes / 1024).toFixed(0)} KB`);
   console.log(`# first load ${(bytes / 1024).toFixed(0)} KB`);
+  await ctx.close();
+});
+
+test("Start today: one tap starts the plan from Programs or Today, with Undo; card taps ask for a start first", async () => {
+  const ctx = await browser.newContext(); const page = await ctx.newPage();
+  await open(page, "/?today=2026-10-28#programs/run");
+  await page.locator("text=Not started yet.").waitFor();
+  await page.locator("button", { hasText: /^01/ }).click();
+  await page.locator("text=Start the plan first").waitFor();
+  assert.equal((await stored(page)) ?.days ?? null, null, "tapping a card before starting saves nothing");
+  await page.addScriptTag({ content: AXE() });
+  const r = await page.evaluate(() => axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] } }));
+  assert.deepEqual(r.violations.map(v => v.id), [], "not-started state passes axe");
+  await page.getByRole("button", { name: "Start today", exact: true }).click();
+  await page.locator("text=Day 1 of 21.").waitFor();
+  assert.equal((await stored(page)).plan.start, "2026-10-28");
+  assert.equal(await page.locator("text=Wed 28 Oct").count() > 0, true, "cards show dates");
+  await page.getByRole("button", { name: "Undo" }).click();
+  await page.locator("text=Not started yet.").waitFor();
+  assert.equal((await stored(page)).plan.start, null, "undo puts it back to not started");
+  await page.getByRole("tab", { name: "Today" }).click();
+  await page.locator("text=No running plan yet.").waitFor();
+  await page.getByRole("button", { name: "Start today", exact: true }).click();
+  await page.getByRole("button", { name: "Mark done" }).waitFor();
+  assert.match(await page.locator("#t-run").locator("..").innerText(), /Day 1 of 21/);
   await ctx.close();
 });

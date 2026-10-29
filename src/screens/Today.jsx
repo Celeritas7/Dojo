@@ -14,7 +14,7 @@ const hint = { color: "var(--ink-2)", fontSize: "var(--text-small)", margin: "0 
 const row = { display: "flex", gap: 6, flexWrap: "wrap" };
 
 // Home screen: today's workout, plan day, sets and practice as rows that save as they are tapped, then this week.
-export function Today({ state, update, updatePf, toggleRun, onOpenDay, onGo }) {
+export function Today({ state, update, updatePf, toggleRun, onPlanAction, onOpenDay, onGo }) {
   const phone = useBreakpoint() === "phone";
   const w = words(state);
   const e = state.days[K] || {};
@@ -61,7 +61,7 @@ export function Today({ state, update, updatePf, toggleRun, onOpenDay, onGo }) {
         <Pill pressed={!!e.run} onClick={() => toggleRun(K)}>{e.run ? "Done ✓" : "Mark done"}</Pill>
       </> : gapDay ? <p style={{ ...hint, margin: 0 }}>Free day: you pushed the plan back. It picks up tomorrow.</p>
         : daysTo > 0 ? <p style={{ ...hint, margin: 0 }}>Starts in {daysTo} day{daysTo === 1 ? "" : "s"}.</p>
-        : <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}><p style={{ ...hint, margin: 0 }}>No running plan yet.</p><Button variant="ghost" onClick={() => onGo({ view: "programs", sub: "run" })} style={{ minHeight: 44 }}>Set a start date</Button></div>}
+        : <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}><p style={{ ...hint, margin: 0 }}>No running plan yet.</p><Button onClick={() => onPlanAction("start")} style={{ minHeight: 44 }}>Start today</Button><Button variant="ghost" onClick={() => onGo({ view: "programs", sub: "run" })} style={{ minHeight: 44 }}>Choose a date</Button></div>}
     </section>}
 
     <section aria-labelledby="t-sets" style={card}>

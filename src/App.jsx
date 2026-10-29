@@ -71,10 +71,11 @@ export function App() {
   const onToggleRun = k => { const n = runIdx(parseISO(k), state.plan) + 1, was = !!(state.days[k] || {}).run; apply(s => toggleRun(s, k), `Day ${n} ${was ? "unticked" : "ticked"}.`); };
   // Plan controls change the schedule; each can be undone by putting the previous plan back exactly.
   const onPlanAction = kind => {
-    const prev = state.plan, next = { repeat: repeatWeek, push: pushBack, restart: restartPlan }[kind](state, TODAY);
+    if (kind === "needStart") { flash("Start the plan first: tap Start today, or pick a date in Plan start."); return; }
+    const prev = state.plan, next = { start: restartPlan, repeat: repeatWeek, push: pushBack, restart: restartPlan }[kind](state, TODAY);
     if (next === state) { flash("Nothing to change."); return; }
     setState(next);
-    flash({ repeat: "Week repeated; later days move back a week.", push: "Plan pushed back a day.", restart: "Plan restarts today." }[kind], { label: "Undo", onClick: () => apply(s => ({ ...s, plan: prev }), "Plan restored.") });
+    flash({ start: "Your plan starts today. Day 1 is on Today.", repeat: "Week repeated; later days move back a week.", push: "Plan pushed back a day.", restart: "Plan restarts today." }[kind], { label: "Undo", onClick: () => apply(s => ({ ...s, plan: prev }), "Plan restored.") });
   };
   const { view } = route;
   return <div style={{ maxWidth: 1080, margin: "0 auto", padding: "20px 16px 48px" }}>
@@ -83,7 +84,7 @@ export function App() {
     {update && <Banner text="A new version of Dojo is ready." action="Reload" onAction={update} onDismiss={() => setUpdate(null)} />}
     {nudge && !state.days[iso(TODAY)] && <Banner text="Nothing logged yet today." action={view === "today" ? null : "Log today"} onAction={() => go({ view: "today" })} onDismiss={() => setNudge(false)} />}
     <main id="panel" role="tabpanel" aria-labelledby={`tab-${view}`}>
-      {view === "today" ? <Today state={state} update={(k, patch) => apply(s => updateDay(s, k, patch))} updatePf={onPf} toggleRun={onToggleRun} onOpenDay={setEditing} onGo={go} />
+      {view === "today" ? <Today state={state} update={(k, patch) => apply(s => updateDay(s, k, patch))} updatePf={onPf} toggleRun={onToggleRun} onPlanAction={onPlanAction} onOpenDay={setEditing} onGo={go} />
         : view === "month" ? <Sheet state={state} month={route.month} onMonth={m => go({ month: m })} onSetMonth={patch => apply(s => setMonth(s, route.month, patch))} onOpenDay={setEditing} reviewOpen={reviewOpen} onReviewToggle={setReviewOpen} />
         : <ProgramsView state={state} sub={route.sub} onSub={sub => go({ sub })} setPlan={patch => apply(s => setPlan(s, patch))} setPf={patch => apply(s => setPf(s, patch))} toggleRun={onToggleRun} onPlanAction={onPlanAction} />}
     </main>
