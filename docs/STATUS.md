@@ -5,7 +5,7 @@ Last updated: 29 Oct 2026, after Phase 5 and the "Start today" change. Live at t
 ## Where things stand
 
 - Six phases done (see `docs/design/phase*-spec.md` and the reviews beside them): foundations, core fixes, visual system, accessibility audit, Today / Month / Programs structure, plan controls and charts, installable offline app.
-- 49 tests (`npm test`): 26 unit, 23 browser (Playwright), including axe WCAG 2.1 AA on every view in both themes, offline reload, update prompt, reminder timing and a first-load budget.
+- 50 tests (`npm test`): 26 unit, 24 browser (Playwright), including axe WCAG 2.1 AA on every view in both themes, offline reload, update prompt, reminder timing and a first-load budget.
 - CI (`.github/workflows/ci.yml`) is green on `main`. It fails on a stale committed build, a failing test or a budget overrun.
 - `docs/design/handoff.md` is the living spec: tokens, components, states, breakpoints, rules and which test protects each.
 

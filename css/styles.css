@@ -37,9 +37,7 @@
     --paper:#0F1626; --card:#172036; --ink:#E6ECF7; --ink-2:#9DAAC4; --line:#2A3654;
     --lane:#6D9AF0; --done:#F2C230; --done-ink:#2A2000; --light:#5E9FD6; --missed:#EE6B82;
     --rest:#55627E; --run:#6D9AF0; --walk:#52C29B; --finish:#EE6B82;
-    --on-lane:#0F1626; --walk-ink:#52C29B; --finish-ink:#EE6B82; --chart-mark:#6290E8; --chart-mark:#6290E8;
-  --tint-done:color-mix(in srgb,var(--done) 8%,var(--card));
-  --strip-1:color-mix(in srgb,var(--done) 30%,var(--line)); --strip-1-ink:var(--ink);
+    --on-lane:#0F1626; --walk-ink:#52C29B; --finish-ink:#EE6B82; --chart-mark:#6290E8;
     /* Dark: lighter done tint and strip shade so text on them stays >= 4.5:1 (axe audit, phase 3). */
     --tint-done:color-mix(in srgb,var(--done) 8%,var(--card));
     --strip-1:color-mix(in srgb,var(--done) 30%,var(--line)); --strip-1-ink:var(--ink);
@@ -51,7 +49,8 @@
   --paper:#0F1626; --card:#172036; --ink:#E6ECF7; --ink-2:#9DAAC4; --line:#2A3654;
   --lane:#6D9AF0; --done:#F2C230; --done-ink:#2A2000; --light:#5E9FD6; --missed:#EE6B82;
   --rest:#55627E; --run:#6D9AF0; --walk:#52C29B; --finish:#EE6B82;
-  --on-lane:#0F1626; --walk-ink:#52C29B; --finish-ink:#EE6B82;
+  --on-lane:#0F1626; --walk-ink:#52C29B; --finish-ink:#EE6B82; --chart-mark:#6290E8;
+  /* Dark: lighter done tint and strip shade so text on them stays >= 4.5:1 (axe audit, phase 3). */
   --tint-done:color-mix(in srgb,var(--done) 8%,var(--card));
   --strip-1:color-mix(in srgb,var(--done) 30%,var(--line)); --strip-1-ink:var(--ink);
   --backdrop:rgba(0,0,0,.6); --shadow:none;
