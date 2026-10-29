@@ -83,3 +83,12 @@ test("export/import round-trips and validates", () => {
   const cleaned = validate({ version: 2, days: { "2026-01-01": { s: "done", m: 0, bogus: 1 }, "2026-01-02": { m: 0 }, "2026-01-03": { sets: 0 } }, pf: { pdays: [1, 9, "x"] } });
   assert.deepEqual(cleaned.days, { "2026-01-01": { s: "done" }, "2026-01-03": { sets: 0 } }); assert.deepEqual(cleaned.pf.pdays, [1]);
 });
+
+import { updateDay, setSettings } from "../../src/reducers.js";
+test("updateDay merges without starting the program; settings round-trip and default", () => {
+  let s = updateDay(emptyState(), "2026-10-28", { s: "done", m: 34 });
+  assert.deepEqual(s.days["2026-10-28"], { s: "done", m: 34 }); assert.equal(s.pf.start, null);
+  s = setSettings(s, { discreet: true });
+  assert.deepEqual(importJSON(exportJSON(s)).settings, { discreet: true });
+  assert.deepEqual(validate({ version: 2 }).settings, { discreet: false }, "older saves without settings still load");
+});

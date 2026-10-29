@@ -85,7 +85,8 @@ function WeekTally({
   style
 }) {
   return /*#__PURE__*/React.createElement("div", {
-    "aria-label": "Week " + week + ": " + done + " of " + of,
+    role: "img",
+    "aria-label": "Week " + week + ": " + done + " of " + of + " days trained",
     style: {
       display: "flex",
       flexDirection: "column",
@@ -658,10 +659,9 @@ function SheetCell({
     style: {
       fontSize: "var(--text-small)",
       color: "var(--lane)",
-      lineHeight: 1,
-      opacity: practice === "planned" ? .45 : 1
+      lineHeight: 1
     }
-  }, test ? "★" : "◆")));
+  }, practice === "planned" ? test ? "☆" : "◇" : test ? "★" : "◆")));
 }
 Object.assign(__ds_scope, { SheetCell });
 })(); } catch (e) { __ds_ns.__errors.push({ path: "components/calendar/SheetCell.jsx", error: String((e && e.message) || e) }); }
@@ -813,6 +813,7 @@ function Lanes({
   value = 0,
   max = 21,
   word = "Day",
+  showLabel = true,
   style
 }) {
   const pct = Math.min(100, max ? value / max * 100 : 0);
@@ -862,7 +863,7 @@ function Lanes({
       transition: "width .5s ease",
       width: pct + "%"
     }
-  }), /*#__PURE__*/React.createElement("span", {
+  }), showLabel && /*#__PURE__*/React.createElement("span", {
     style: {
       position: "absolute",
       top: "50%",
@@ -1070,7 +1071,7 @@ function Strip({
       display: "grid",
       placeItems: "center",
       fontSize: "var(--text-caption)",
-      color: (d.sets || 0) >= 3 ? "var(--done-ink)" : "var(--ink-2)",
+      color: ["var(--ink-2)", "var(--strip-1-ink)", "var(--done-ink)", "var(--done-ink)"][Math.min(3, d.sets || 0)],
       boxShadow: d.practice ? "inset 0 -4px 0 var(--lane)" : "none"
     }
   }, d.n)));
@@ -1157,9 +1158,11 @@ function CheckinCard({
 function Question({
   children,
   hint,
+  id,
   style
 }) {
   return /*#__PURE__*/React.createElement("p", {
+    id: id,
     style: {
       margin: "10px 0 6px",
       fontWeight: 600,
@@ -1324,7 +1327,7 @@ function Dialog({
       color: "var(--missed)",
       fontSize: "var(--text-small)"
     }
-  }, error), /*#__PURE__*/React.createElement("div", {
+  }, error), (onClear || onSave) && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",

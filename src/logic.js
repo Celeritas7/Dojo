@@ -50,6 +50,8 @@ export function runInfo(i, recovery) {
   if (kind === "rest" && recovery) { label = "Recovery"; what = "Shoes on, 10-min walk or stretch"; mins = 10; }
   return { kind, label, what, extra: p[2], mins };
 }
+// "Run 2 min, walk 2 min, 6 rounds" rather than "Run: Run 2 min, ..."; keeps the label only when the text doesn't already say it.
+export const planLine = info => (info.what.toLowerCase().includes(info.label.toLowerCase()) ? info.what : `${info.label}: ${info.what}`) + (info.extra ? `, ${info.extra}` : "");
 export const planDone = (state) => { if (!state.plan.start) return []; return PLAN.map((_, i) => !!(state.days[runKey(state.plan.start, i)] || {}).run); };
 
 // ---- pelvic floor program ----
