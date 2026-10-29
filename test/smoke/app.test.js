@@ -271,6 +271,26 @@ test("Settings: theme Auto / Dark / Light is applied and remembered", async () =
   await ctx.close();
 });
 
+test("theme: Dark picked in Settings sets every token exactly as the system dark theme does", async () => {
+  // Every custom property declared on :root, read as computed (var() resolved), so a token missing from either dark block shows up.
+  const tokens = page => page.evaluate(() => {
+    const names = new Set();
+    const walk = rules => { for (const r of rules) { if (r.cssRules) walk(r.cssRules); if (r.style && /:root/.test(r.selectorText || "")) for (const n of r.style) if (n.startsWith("--")) names.add(n); } };
+    for (const sh of document.styleSheets) walk(sh.cssRules);
+    const cs = getComputedStyle(document.documentElement);
+    return Object.fromEntries([...names].sort().map(n => [n, cs.getPropertyValue(n).trim()]));
+  });
+  const system = await browser.newContext({ colorScheme: "dark" }); const a = await system.newPage();
+  await open(a, "/?demo=1");
+  const picked = await browser.newContext({ colorScheme: "light" }); const b = await picked.newPage();
+  await b.addInitScript(() => localStorage.setItem("dojo.theme", "dark"));
+  await open(b, "/?demo=1");
+  const [ta, tb] = [await tokens(a), await tokens(b)];
+  assert.equal(ta["--chart-mark"], "#6290E8");
+  assert.deepEqual(tb, ta);
+  await system.close(); await picked.close();
+});
+
 test("discreet mode: no program-specific words on Today, Month or the routine page until asked", async () => {
   const ctx = await browser.newContext(); const page = await ctx.newPage();
   await open(page, "/?today=2026-10-28");

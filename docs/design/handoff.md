@@ -13,7 +13,7 @@ A personal training log used daily, mostly on a phone, often in public. Three vi
 | **Programs** (`#programs/run`, `#programs/pf`) | 21-day running plan with schedule controls; pelvic-floor program with control chart | |
 | **Settings** (dialog) | Theme, discreet mode, reminder, backup / restore / clear | |
 
-Everything is stored on the device (`localStorage` key `dojo.state`, schema in `src/store.js`). Nothing is sent anywhere. The app installs as a PWA and works offline.
+Everything is stored on the device: `localStorage` key `dojo.state` (schema in `src/store.js`), plus `dojo.theme` (the Settings theme choice, read before first paint) and `dojo.reminded` (the day the reminder last showed). Nothing is sent anywhere. The app installs as a PWA and works offline.
 
 ## Design tokens (`css/styles.css`)
 
@@ -48,7 +48,7 @@ Families: `--font-display` (Barlow Condensed) for headings and numerals, `--font
 | `--chart-mark` | `#2E5AAC` | `#6290E8` | Chart marks only (dataviz validator) |
 | `--tint-done` | 18% done on card | 8% done on card | Ticked plan cards |
 
-Dark mode: `prefers-color-scheme` unless the person picks Light or Dark in Settings (stored as `<html data-theme>`, applied before first paint). The two dark blocks in `styles.css` must stay identical.
+Dark mode: `prefers-color-scheme` unless the person picks Light or Dark in Settings (stored as `<html data-theme>`, applied before first paint). The two dark blocks in `styles.css` must stay identical (tested: every token is compared between system dark and Dark picked in Settings).
 
 ### Shape and size
 
@@ -65,7 +65,7 @@ Radii `--radius-xs…xl`, `--radius-pill`. Every interactive control is **≥ 44
 | `StateGrid` | options | Workout status picker with markers; selected = 2 px ink border + ✓ |
 | `Stat` | `compact` | Secondary figures use `compact` so the primary figure leads |
 | `Lanes` | `showLabel` | Progress bar; hide the label when the number is printed above |
-| `Dialog` | footer optional | Focus trap, Escape, close button, scroll lock, focus return |
+| `Dialog` | `onClear`, `onSave`, `error` | Focus trap, Escape, close button, scroll lock, focus return; the Clear day / Save day footer shows only when `onClear` or `onSave` is passed |
 | `ColumnChart`, `LineChart` | `src/screens/Charts.jsx` | Single series; tooltip on hover/focus; "Show numbers" table |
 | `Toast` | action (Undo, Change) | Fixed bottom; holds while hovered/focused |
 | `Banner` | `src/App.jsx` | Persistent notices: app update, reminder |
@@ -83,17 +83,19 @@ Radii `--radius-xs…xl`, `--radius-pill`. Every interactive control is **≥ 44
 | Clear day | Tap | Clears at once; toast with **Undo** (8 s, held on hover/focus) |
 | Plan controls | Repeat / push back / restart | Changes the schedule; toast with **Undo** that restores the previous plan exactly |
 | First program answer | Tap | Sets program start; toast with **Change** → Programs, focus on the start field |
+| Start today (Today, Programs) | Tap | Starts the running plan today; toast with **Undo** that puts it back to not started |
+| Plan card | Tap before the plan has started | Saves nothing; toast "Start the plan first: tap Start today, or pick a date in Plan start." |
 | App update | New version installed | Banner "A new version of Dojo is ready." + **Reload**; never reloads by itself |
 | Reminder | Due, app visible | Banner "Nothing logged yet today." (+ **Log today** off Today); clears when anything is logged |
-| Reminder | Due, app in background | System notification if permitted, else the banner on return |
+| Reminder | Due, app in background | System notification if permitted ("Time to log today." in discreet mode), else the banner on return |
 
 ## Responsive behaviour (`src/layout.js`)
 
 | Breakpoint | Changes |
 |---|---|
 | Phone (< 640 px) | Compact calendar cells, single-letter weekdays, 40 px week column; plan cards 3 per row; workout options 2 × 2; 28-day strip 7 columns |
-| Tablet (640–959 px) | Full cells; plan cards 4 per row |
-| Desktop (≥ 960 px) | Plan cards 7 per row; workout options in one row |
+| Tablet (640–959 px) | Full cells; plan cards 4 per row; workout options in one row |
+| Desktop (≥ 960 px) | Plan cards 7 per row |
 
 Grids for stats, rules and stages auto-fit (`autoGrid(min)`). No horizontal scroll at 390 or 320 px on any view (tested).
 
@@ -106,7 +108,7 @@ Grids for stats, rules and stages auto-fit (`autoGrid(min)`). No horizontal scro
 
 ## Edge cases
 
-- **Empty states**: past days with nothing logged are blank; charts say what's missing ("No minutes logged in these weeks yet"); a profile with no plan offers "Set a start date".
+- **Empty states**: past days with nothing logged are blank; charts say what's missing ("No minutes logged in these weeks yet"); with no running plan, Today says "No running plan yet." and Programs says "Ready to begin?", both with a **Start today** button (another day can be picked in Plan start).
 - **No target**: Month shows "N days trained · set a target under Month review".
 - **Plan schedule**: gaps belong to the week they delay; repeated weeks are labelled "· again"; progress counts each plan day once.
 - **Offline**: everything works after one visit; nothing to show differently.
@@ -138,6 +140,8 @@ Grids for stats, rules and stages auto-fit (`autoGrid(min)`). No horizontal scro
 | No horizontal scroll at 390 / 320 px | smoke: "layout…" |
 | Discreet vocabulary everywhere | smoke: "discreet mode…" |
 | Installable, offline, update prompt, reminder, first-load budget | smoke: Phase 5 tests |
+| Start today from Programs or Today, with Undo; card taps before a start save nothing | smoke: "Start today: one tap starts the plan…" |
+| Both dark blocks set the same tokens | smoke: "theme: Dark picked in Settings sets every token…" |
 | Committed `dist/` and `sw.js` match the source; bundle budget | CI (`.github/workflows/ci.yml`), `npm run verify` |
 
 ## Not covered yet
