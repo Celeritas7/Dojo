@@ -30,7 +30,7 @@ const open = async (page, url) => {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   page.on("console", m => m.type() === "error" && errors.push(m.text()));
-  await page.goto(base + url); await page.waitForSelector("[role=grid]");
+  await page.goto(base + url); await page.waitForSelector("[aria-label$=' calendar']");
   return errors;
 };
 
@@ -59,7 +59,7 @@ test("a logged day survives a reload; demo mode never writes storage", async () 
   await page.getByLabel("Minutes").fill("15");
   await page.getByRole("button", { name: "Save day" }).click();
   assert.equal(await page.locator("[aria-label='October 15, Light / partial']").count(), 1);
-  await page.reload(); await page.waitForSelector("[role=grid]");
+  await page.reload(); await page.waitForSelector("[aria-label$=' calendar']");
   assert.equal(await page.locator("[aria-label='October 15, Light / partial']").count(), 1);
   const stored = JSON.parse(await page.evaluate(() => localStorage.getItem("dojo.state")));
   assert.deepEqual(stored.days["2026-10-15"], { s: "light", m: 15 });
@@ -78,10 +78,10 @@ test("check-in starts unanswered, writes today's record and announces the progra
   await open(page, "/?today=2026-10-28");
   assert.equal(await page.locator("section [aria-pressed=true]").count(), 0, "nothing in the check-in should be pressed before answering");
   await page.getByRole("button", { name: "0", exact: true }).first().click();
-  await page.locator("text=Program start set to today").waitFor();
-  assert.equal(await page.getByRole("button", { name: "Done", exact: true }).count(), 1, "0 sets counts as an answer");
+  await page.locator("text=Your program starts today").waitFor();
+  assert.equal(await page.getByRole("button", { name: "Done for today", exact: true }).count(), 1, "0 sets counts as an answer");
   await page.getByRole("button", { name: "2", exact: true }).first().click();
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await page.getByRole("button", { name: "Done for today", exact: true }).click();
   await page.locator("text=Pelvic floor 2/3 sets").waitFor();
   const stored = JSON.parse(await page.evaluate(() => localStorage.getItem("dojo.state")));
   assert.deepEqual(stored.days["2026-10-28"], { sets: 2 }); assert.equal(stored.pf.start, "2026-10-28");
@@ -109,7 +109,7 @@ test("day editor: focus stays inside, Escape and the close button dismiss, minut
   await page.locator("[aria-label='October 30']").click();
   await page.getByLabel("Minutes").fill("25");
   await page.getByRole("button", { name: "Save day" }).click();
-  await page.locator("[role=alert]:has-text('Pick what kind of day')").waitFor();
+  await page.locator("[role=alert]:has-text('Choose Done, Light, Missed or Rest')").waitFor();
   assert.equal(await page.locator("[role=dialog]").count(), 1);
   await page.getByRole("button", { name: "Light / partial", exact: true }).click();
   assert.equal(await page.locator("[role=alert]").count(), 0);
@@ -140,7 +140,7 @@ test("ticking a plan day shows on the sheet; past empty days are blank; Today bu
   await page.getByRole("button", { name: "Previous month" }).click();
   await page.locator("h2:has-text('September 2026')").waitFor();
   // September has nothing logged: no status markers and no Kegel dots on its (past) days.
-  const sep = page.locator("[role=grid] button[aria-label^='September']");
+  const sep = page.locator("[aria-label$=' calendar'] button[aria-label^='September']");
   assert.equal(await sep.count(), 30);
   assert.equal(await sep.first().locator("span > span:nth-child(2), i").count(), 0, "no marker, no dots");
   assert.equal(await page.locator("text=Running plan days").count(), 0, "plan stat hidden outside the plan months");
@@ -149,4 +149,75 @@ test("ticking a plan day shows on the sheet; past empty days are blank; Today bu
   await page.locator("h2:has-text('October 2026')").waitFor();
   assert.equal(await page.getByRole("button", { name: "Today", exact: true }).count(), 0);
   await ctx.close();
+});
+
+test("phone layout: no horizontal scroll on either tab or with sections open", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await open(page, "/?demo=1");
+  const width = () => page.evaluate(() => document.documentElement.scrollWidth);
+  assert.equal(await width(), 390, "monthly sheet");
+  for (const s of ["Running plan:", "Pelvic floor program", "Backup and data"]) await page.locator(`summary:has-text('${s}')`).click();
+  assert.equal(await width(), 390, "sheet with every section open");
+  await page.screenshot({ path: join(SHOTS, "phone-sheet-open.png"), fullPage: true });
+  await page.getByRole("tab", { name: "Running plan" }).click();
+  assert.equal(await width(), 390, "running plan");
+  await page.screenshot({ path: join(SHOTS, "phone-run.png"), fullPage: true });
+  await page.close();
+});
+
+test("resizing across the phone breakpoint and back leaves the calendar intact", async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await open(page, "/?demo=1");
+  const heads = () => page.evaluate(() => [...document.querySelector("[aria-label$=' calendar']").children].slice(0, 8).map(e => e.textContent).join(","));
+  await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(100);
+  assert.equal(await heads(), "M,T,W,T,F,S,S,Wk");
+  await page.setViewportSize({ width: 1280, height: 900 }); await page.waitForTimeout(100);
+  assert.equal(await heads(), "Mon,Tue,Wed,Thu,Fri,Sat,Sun,Week");
+  await page.close();
+});
+
+test("tabs: arrow keys move selection, panel is labelled by the selected tab", async () => {
+  const page = await browser.newPage();
+  await open(page, "/?demo=1");
+  await page.getByRole("tab", { name: "Monthly sheet" }).focus();
+  await page.keyboard.press("ArrowRight");
+  assert.equal(await page.getByRole("tab", { selected: true }).innerText(), "Running plan");
+  assert.equal(await page.locator("[role=tabpanel]").getAttribute("aria-labelledby"), "tab-run");
+  await page.keyboard.press("Home");
+  assert.equal(await page.getByRole("tab", { selected: true }).innerText(), "Monthly sheet");
+  assert.equal(await page.locator("[role=tab][tabindex='0']").count(), 1, "roving tabindex");
+  await page.close();
+});
+
+test("first check-in offers Change, which opens the program section", async () => {
+  const ctx = await browser.newContext(); const page = await ctx.newPage();
+  await open(page, "/?today=2026-10-28");
+  await page.getByRole("button", { name: "3", exact: true }).first().click();
+  await page.getByRole("button", { name: "Change", exact: true }).click();
+  await page.locator("#pf-program[open]").waitFor();
+  await page.waitForTimeout(150);
+  assert.equal(await page.locator("#pf-program[open]").count(), 1, "stays open after the native toggle event");
+  await ctx.close();
+});
+
+test("theme switch cycles Auto → Dark → Light and is remembered", async () => {
+  const ctx = await browser.newContext({ colorScheme: "light" }); const page = await ctx.newPage();
+  await open(page, "/?demo=1");
+  const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  assert.equal(await bg(), "rgb(245, 247, 250)");
+  await page.getByRole("button", { name: /Theme: Auto/ }).click();
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), "dark");
+  assert.equal(await bg(), "rgb(15, 22, 38)");
+  await page.screenshot({ path: join(SHOTS, "desktop-dark.png"), fullPage: true });
+  await page.reload(); await page.waitForSelector("[aria-label$=' calendar']");
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), "dark", "remembered across reloads");
+  await page.getByRole("button", { name: /Theme: Dark/ }).click();
+  assert.equal(await bg(), "rgb(245, 247, 250)");
+  await page.getByRole("button", { name: /Theme: Light/ }).click();
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), undefined, "back to Auto");
+  await ctx.close();
+  const dark = await browser.newContext({ colorScheme: "dark" }); const p2 = await dark.newPage();
+  await open(p2, "/?demo=1");
+  assert.equal(await p2.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(15, 22, 38)", "Auto follows the system");
+  await dark.close();
 });

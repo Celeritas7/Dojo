@@ -1,6 +1,6 @@
 import React from "react";
 import { TODAY, DEMO, initialState } from "./env.js";
-import { monthKey } from "./logic.js";
+import { monthKey, runIdx, parseISO } from "./logic.js";
 import { emptyState, load, save } from "./store.js";
 import { saveDay, clearDay, restoreDay, patchDay, toggleRun, setPlan, setPf, setMonth } from "./reducers.js";
 import { Toast } from "./screens/Toast.jsx";
@@ -24,30 +24,37 @@ export function App() {
 
   // Persist every change (except in demo mode, which must never overwrite real data).
   const first = React.useRef(true);
-  React.useEffect(() => { if (first.current) { first.current = false; return; } if (!DEMO && !save(localStorage, state)) flash("Could not save: storage is full or blocked"); }, [state]);
+  React.useEffect(() => { if (first.current) { first.current = false; return; } if (!DEMO && !save(localStorage, state)) flash("Couldn't save on this device. Download a backup to keep your changes."); }, [state]);
 
-  const apply = (fn, msg = "Saved") => { setState(s => fn(s)); flash(msg); };
+  const apply = (fn, msg = "Saved.") => { setState(s => fn(s)); flash(msg); };
   const onSave = (k, ed) => { apply(s => saveDay(s, k, ed)); setEditing(null); };
   // Clearing is immediate but reversible: the toast offers Undo for a few seconds.
   const onClear = k => {
     const prev = state.days[k]; setEditing(null);
-    if (!prev) { flash("Nothing logged on that day"); return; }
+    if (!prev) { flash("Nothing to clear."); return; }
     setState(s => clearDay(s, k));
-    flash("Day cleared", { label: "Undo", onClick: () => apply(s => restoreDay(s, k, prev), "Restored") });
+    flash("Day cleared.", { label: "Undo", onClick: () => apply(s => restoreDay(s, k, prev), "Day restored.") });
   };
-  // The first check-in answer also sets the program start; say so, since test dates follow from it.
-  const onCheckin = (k, patch) => { const starts = !state.pf.start; apply(s => patchDay(s, k, patch), starts ? "Saved. Program start set to today; change it under Pelvic floor program." : "Saved"); };
-  const toggle = key => setDet(d => ({ ...d, [key]: !d[key] }));
+  // The first check-in answer also sets the program start; say so, since test dates follow from it, and offer a way to change it.
+  const openProgram = () => { setView("sheet"); setDet(d => ({ ...d, pf: true })); setTimeout(() => document.getElementById("pf-program")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
+  const onCheckin = (k, patch) => {
+    const starts = !state.pf.start;
+    setState(s => patchDay(s, k, patch));
+    if (starts) flash("Saved. Your program starts today.", { label: "Change", onClick: openProgram }); else flash("Saved.");
+  };
+  const onToggleRun = k => { const n = runIdx(parseISO(k), state.plan.start) + 1, was = !!(state.days[k] || {}).run; apply(s => toggleRun(s, k), `Day ${n} ${was ? "unticked" : "ticked"}.`); };
+  // Sections report their real open state; storing it (rather than flipping) keeps code-opened sections open.
+  const setOpen = key => open => setDet(d => d[key] === open ? d : { ...d, [key]: open });
   return <div style={{ maxWidth: 1080, margin: "0 auto", padding: "20px 16px 48px" }}>
     <Header view={view} onView={setView} />
     <section><Checkin state={state} open={ciOpen} setOpen={setCiOpen} update={onCheckin} /></section>
-    <main>
+    <main id="panel" role="tabpanel" aria-labelledby={`tab-${view}`}>
       {view === "sheet" ? <>
         <Sheet state={state} month={month} onMonth={setMonth_} onSetMonth={patch => apply(s => setMonth(s, month, patch))} onOpenDay={setEditing} />
-        <RunPlanDetails state={state} setPlan={patch => apply(s => setPlan(s, patch))} open={det.run} onToggle={() => toggle("run")} />
-        <PFDetails state={state} setPf={patch => apply(s => setPf(s, patch))} open={det.pf} onToggle={() => toggle("pf")} />
-        <DataSection state={state} onReplace={next => setState(next || emptyState())} open={det.data} onToggle={() => toggle("data")} flash={flash} />
-      </> : <RunPlanView state={state} setPlan={patch => apply(s => setPlan(s, patch))} toggleRun={k => apply(s => toggleRun(s, k))} />}
+        <RunPlanDetails state={state} setPlan={patch => apply(s => setPlan(s, patch))} open={det.run} onToggle={setOpen("run")} />
+        <PFDetails id="pf-program" state={state} setPf={patch => apply(s => setPf(s, patch))} open={det.pf} onToggle={setOpen("pf")} />
+        <DataSection state={state} onReplace={next => setState(next || emptyState())} open={det.data} onToggle={setOpen("data")} flash={flash} />
+      </> : <RunPlanView state={state} setPlan={patch => apply(s => setPlan(s, patch))} toggleRun={onToggleRun} />}
     </main>
     <Toast toast={toast} onDismiss={() => setToast(null)} />
     {editing && <DayEditor key={editing} state={state} dayKey={editing} onClose={() => setEditing(null)} onSave={onSave} onClear={onClear} />}

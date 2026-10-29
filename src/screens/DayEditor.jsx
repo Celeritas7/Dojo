@@ -9,7 +9,7 @@ export function DayEditor({ state, dayKey: k, onClose, onSave, onClear }) {
   const [ed, setEd] = React.useState({ s: e.s || null, m: e.m || "", run: ri >= 0 ? !!e.run : null, sets: e.sets ?? null, practice: e.practice ?? null, pauses: e.pauses || "", control: e.control || 0, time: e.time || "" });
   const [error, setError] = React.useState("");
   const minutesNeedStatus = !ed.s && +ed.m > 0;
-  const save = () => { if (minutesNeedStatus) { setError("Pick what kind of day it was (done, light, missed or rest) to save these minutes."); return; } onSave(k, ed); };
+  const save = () => { if (minutesNeedStatus) { setError("Choose Done, Light, Missed or Rest to save these minutes."); return; } onSave(k, ed); };
   const h = pfHelpers(state.pf, TODAY); const test = h.testFor(k);
   const planned = !!state.pf.start && date >= h.startDate() && (test || h.isPracticeDay(date));
   const info = ri >= 0 ? runInfo(ri, state.plan.recovery) : null;
@@ -23,7 +23,7 @@ export function DayEditor({ state, dayKey: k, onClose, onSave, onClear }) {
       <StateGrid value={ed.s} onChange={v => { setEd({ ...ed, s: v }); setError(""); }} options={Object.entries(STATES).map(([value, label]) => ({ value, label }))} />
       <Field label="Minutes" as="number" min={0} max={600} inputMode="numeric" value={ed.m} onChange={ev => setEd({ ...ed, m: ev.target.value })} placeholder="e.g. 30" /></DialogSection>
     <DialogSection title="Kegel sets"><div style={pills}>{[0, 1, 2, 3].map(n => <Pill key={n} pressed={ed.sets === n} onClick={() => setEd({ ...ed, sets: n })}>{n}</Pill>)}</div></DialogSection>
-    <DialogSection title={<>{test ? `Test session (week ${test.week})` : "Control practice"}{!planned && <span style={{ fontWeight: 400, color: "var(--ink-2)", fontSize: 14 }}> (not a planned day)</span>}</>}>
+    <DialogSection title={<>{test ? `Test session (week ${test.week})` : "Control practice"}{!planned && <span style={{ fontWeight: 400, color: "var(--ink-2)", fontSize: "var(--text-small)" }}> (not a planned day)</span>}</>}>
       <div style={pills}><Pill pressed={ed.practice === "yes"} onClick={() => setEd({ ...ed, practice: "yes" })}>Yes</Pill><Pill pressed={ed.practice === "no"} onClick={() => setEd({ ...ed, practice: "no" })}>No</Pill></div>
       {ed.practice === "yes" && <><div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "flex-end", marginTop: 8 }}>
         {test && <Field label="Minutes until finish" as="number" min={0} step={0.5} value={ed.time} onChange={ev => setEd({ ...ed, time: ev.target.value })} inputStyle={{ width: 100 }} />}
