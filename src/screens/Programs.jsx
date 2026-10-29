@@ -18,7 +18,7 @@ const planRange = start => start ? `${fmtDate(parseISO(start))} to ${fmtDate(run
 export function ProgramsView({ state, sub, onSub, setPlan, setPf, toggleRun }) {
   const w = words(state);
   return <>
-    <TabList label="Programs" style={{ marginBottom: 16 }}>
+    <TabList label="Programs" size="sm" style={{ marginBottom: 16, borderBottom: "1px solid var(--line)", borderRadius: 0, paddingBottom: 6, display: "flex" }}>
       {[["run", "Running plan"], ["pf", w.programTab]].map(([k, l]) => <Tab key={k} id={`ptab-${k}`} aria-controls="ppanel" selected={sub === k} onClick={() => onSub(k)}>{l}</Tab>)}
     </TabList>
     <div id="ppanel" role="tabpanel" aria-labelledby={`ptab-${sub}`}>

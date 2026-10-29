@@ -79,16 +79,16 @@ export function Sheet({ state, month: key, onMonth, onSetMonth, onOpenDay, revie
     </div>
     <Motto>{MOTTOS[key] || DEFAULT_MOTTO}</Motto>
     {/* One primary figure; the bar under it carries no second copy of the number. */}
-    <p style={{ margin: "0 0 2px", font: "700 var(--text-subhead)/1.2 var(--font-display)", letterSpacing: ".01em" }}>
+    <p style={{ margin: "0 0 4px", font: "800 var(--text-title)/1.1 var(--font-display)", letterSpacing: ".01em" }}>
       {target ? `${trained} of ${target} days trained` : `${trained} day${trained === 1 ? "" : "s"} trained`}
       {!target && <span style={{ font: "400 var(--text-small) var(--font-body)", color: "var(--ink-2)" }}> · set a target under Month review</span>}
     </p>
     <Lanes value={trained} max={target || daysIn} word="Day" showLabel={false} />
     <div id="calendar" tabIndex={-1} onKeyDown={onCalendarKey} role="group" aria-label={`${MONTHS[m - 1]} ${y} calendar`} style={{ outline: "none", display: "grid", gridTemplateColumns: phone ? "repeat(7,minmax(0,1fr)) 40px" : "repeat(7,minmax(0,1fr)) 60px", gap: phone ? 4 : 6, marginTop: 10 }}><DowHeader labels={phone ? ["M", "T", "W", "T", "F", "S", "S"] : undefined} trailing={phone ? "Wk" : "Week"} />{rows}</div>
-    <Legend items={[{ status: "done", label: "Done" }, { status: "light", label: "Light" }, { status: "missed", label: "Missed" }, { status: "rest", label: "Rest" }, { status: null, label: "To do" }, { node: <span style={{ font: "800 var(--text-caption)/1 var(--font-display)", background: "var(--lane)", color: "var(--on-lane)", borderRadius: "var(--radius-pill)", padding: "2px 5px" }}>28</span>, label: "Today" }, { node: <Icon name="run" />, label: "Run plan" }, { node: <KegelDots sets={3} size={7} />, label: w.sets }, { node: glyph("◆"), label: w.practice }, { node: glyph("★"), label: w.test }, { node: glyph("◇ ☆"), label: "Planned" }]} />
+    <Legend items={[{ status: "done", label: "Done" }, { status: "light", label: "Light" }, { status: "rest", label: "Rest" }, { status: "missed", label: "Missed" }, { status: null, label: "To do" }, { node: <span style={{ font: "800 var(--text-caption)/1 var(--font-display)", background: "var(--lane)", color: "var(--on-lane)", borderRadius: "var(--radius-pill)", padding: "2px 5px" }}>28</span>, label: "Today" }, { node: <Icon name="run" />, label: "Run plan" }, { node: <KegelDots sets={3} size={7} />, label: w.sets }, { node: glyph("◆"), label: w.practice }, { node: glyph("★"), label: w.test }, { node: glyph("◇ ☆"), label: "Planned" }]} />
     <div style={{ ...autoGrid(150), margin: "14px 0" }}>
-      <Stat value={longest(seq)} label="Longest streak" /><Stat value={totalMin} label="Minutes" />
-      <Stat value={setsFull} label={`Days with 3 ${w.sets.toLowerCase().replace("kegel", "Kegel")}`} /><Stat value={pracN} label={`${w.practice} sessions`} />
+      <Stat compact value={longest(seq)} label="Longest streak" /><Stat compact value={totalMin} label="Minutes" />
+      <Stat compact value={setsFull} label={`Days with 3 ${w.sets.toLowerCase().replace("kegel", "Kegel")}`} /><Stat compact value={pracN} label={`${w.practice} sessions`} />
     </div>
     <Details summary={`Month review${md.goal ? ": " + md.goal : ""}`} open={reviewOpen} onToggle={onReviewToggle}>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 110px", gap: 10, marginBottom: 14 }}>

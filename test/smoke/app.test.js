@@ -137,7 +137,7 @@ test("day editor: focus stays inside, Escape and the close button dismiss, minut
   await page.locator("[aria-label^='October 30,']").click();
   await page.getByLabel("Minutes", { exact: true }).fill("25");
   await page.getByRole("button", { name: "Save day" }).click();
-  await page.locator("[role=alert]:has-text('Choose Done, Light, Missed or Rest')").waitFor();
+  await page.locator("[role=alert]:has-text('Choose Done, Light, Rest or Missed')").waitFor();
   await page.getByRole("button", { name: "Light / partial", exact: true }).click();
   assert.equal(await page.locator("[role=alert]").count(), 0);
   await page.getByRole("button", { name: "Save day" }).click();

@@ -15,7 +15,7 @@ export const PLAN = [
 export const PLAN_DAYS = PLAN.length;
 export const PLAN_RUNS = PLAN.filter(p => p[0] === "run" || p[0] === "finish").length;
 export const WEEKS = [["Week 1","Build the habit"],["Week 2","Longer intervals"],["Week 3","Toward non-stop"]];
-export const STATES = {done:"Workout done",light:"Light / partial",missed:"Missed",rest:"Rest day"};
+export const STATES = {done:"Workout done",light:"Light / partial",rest:"Rest day",missed:"Missed"};
 export const STAGES = [
  ["Weeks 1–2","Hold 3 s, relax 3 s","10 reps, 3 times a day","Learn your arousal scale. Stop fully at 7–8, wait until it drops to about 4, then continue."],
  ["Weeks 3–4","Hold 5 s, relax 5 s","12 reps, 3 times a day","Slow down or change angle at 7 instead of stopping. Add slow belly breathing."],
