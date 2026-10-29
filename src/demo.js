@@ -1,5 +1,5 @@
 // Demo state for screenshots and tests. Loaded with ?demo=1 (and usually ?today=2026-10-28). Not used in normal runs.
-import { iso, runKey } from "./logic.js";
+import { iso, runKey } from "./logic.js"; // runKey(start, pos): with the default schedule, position = plan day
 import { emptyState, cleanDay } from "./store.js";
 
 export const DEMO_TODAY = "2026-10-28"; // Wed 28 Oct 2026, run-plan day 8

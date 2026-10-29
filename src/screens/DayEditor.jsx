@@ -6,7 +6,7 @@ const { Dialog, DialogSection, StateGrid, Pill, Field } = DS;
 
 export function DayEditor({ state, dayKey: k, onClose, onSave, onClear }) {
   const date = parseISO(k), e = state.days[k] || {};
-  const ri = runIdx(date, state.plan.start);
+  const ri = runIdx(date, state.plan);
   const [ed, setEd] = React.useState({ s: e.s || null, m: e.m || "", run: ri >= 0 ? !!e.run : null, sets: e.sets ?? null, practice: e.practice ?? null, pauses: e.pauses || "", control: e.control || 0, time: e.time || "" });
   const [error, setError] = React.useState("");
   const minutesNeedStatus = !ed.s && +ed.m > 0;

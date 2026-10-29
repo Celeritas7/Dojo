@@ -2,7 +2,7 @@ import React from "react";
 import { TODAY, DEMO, initialState } from "./env.js";
 import { monthKey, runIdx, parseISO } from "./logic.js";
 import { emptyState, load, save } from "./store.js";
-import { saveDay, clearDay, restoreDay, updateDay, patchDay, toggleRun, setPlan, setPf, setMonth, setSettings } from "./reducers.js";
+import { saveDay, clearDay, restoreDay, updateDay, patchDay, toggleRun, setPlan, setPf, setMonth, setSettings, repeatWeek, pushBack, restartPlan } from "./reducers.js";
 import { parseRoute, formatRoute } from "./route.js";
 import { Toast } from "./screens/Toast.jsx";
 import { Header } from "./screens/Header.jsx";
@@ -49,7 +49,14 @@ export function App() {
     setState(s => patchDay(s, k, patch));
     if (starts) flash("Saved. Your program starts today.", { label: "Change", onClick: openProgramStart }); else flash("Saved.");
   };
-  const onToggleRun = k => { const n = runIdx(parseISO(k), state.plan.start) + 1, was = !!(state.days[k] || {}).run; apply(s => toggleRun(s, k), `Day ${n} ${was ? "unticked" : "ticked"}.`); };
+  const onToggleRun = k => { const n = runIdx(parseISO(k), state.plan) + 1, was = !!(state.days[k] || {}).run; apply(s => toggleRun(s, k), `Day ${n} ${was ? "unticked" : "ticked"}.`); };
+  // Plan controls change the schedule; each can be undone by putting the previous plan back exactly.
+  const onPlanAction = kind => {
+    const prev = state.plan, next = { repeat: repeatWeek, push: pushBack, restart: restartPlan }[kind](state, TODAY);
+    if (next === state) { flash("Nothing to change."); return; }
+    setState(next);
+    flash({ repeat: "Week added again.", push: "Plan pushed back a day.", restart: "Plan restarts today." }[kind], { label: "Undo", onClick: () => apply(s => ({ ...s, plan: prev }), "Plan restored.") });
+  };
   const { view } = route;
   return <div style={{ maxWidth: 1080, margin: "0 auto", padding: "20px 16px 48px" }}>
     {view === "month" && <a className="skip-link" href="#calendar" onClick={e => { e.preventDefault(); document.getElementById("calendar")?.focus(); }}>Skip to calendar</a>}
@@ -57,7 +64,7 @@ export function App() {
     <main id="panel" role="tabpanel" aria-labelledby={`tab-${view}`}>
       {view === "today" ? <Today state={state} update={(k, patch) => apply(s => updateDay(s, k, patch))} updatePf={onPf} toggleRun={onToggleRun} onOpenDay={setEditing} onGo={go} />
         : view === "month" ? <Sheet state={state} month={route.month} onMonth={m => go({ month: m })} onSetMonth={patch => apply(s => setMonth(s, route.month, patch))} onOpenDay={setEditing} reviewOpen={reviewOpen} onReviewToggle={setReviewOpen} />
-        : <ProgramsView state={state} sub={route.sub} onSub={sub => go({ sub })} setPlan={patch => apply(s => setPlan(s, patch))} setPf={patch => apply(s => setPf(s, patch))} toggleRun={onToggleRun} />}
+        : <ProgramsView state={state} sub={route.sub} onSub={sub => go({ sub })} setPlan={patch => apply(s => setPlan(s, patch))} setPf={patch => apply(s => setPf(s, patch))} toggleRun={onToggleRun} onPlanAction={onPlanAction} />}
     </main>
     <Toast toast={toast} onDismiss={() => setToast(null)} onHold={holdToast} onRelease={releaseToast} />
     {editing && <DayEditor key={editing} state={state} dayKey={editing} onClose={() => setEditing(null)} onSave={onSave} onClear={onClear} />}

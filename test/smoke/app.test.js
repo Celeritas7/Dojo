@@ -290,3 +290,77 @@ test("discreet mode: no program-specific words on Today, Month or the routine pa
   assert.match(await visibleText(), /arousal/i, "details appear when asked");
   await ctx.close();
 });
+
+test("plan controls: repeat a week, push back a day, start again, each undoable", async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await open(page, "/?demo=1#programs/run");
+  await page.getByRole("button", { name: "Repeat week 2" }).click();
+  await page.locator("b:has-text('Week 2 · again')").waitFor();
+  assert.match(await page.locator("p:has-text(' to ')").first().innerText(), /Wed 21 Oct to Tue 17 Nov/, "plan now ends a week later (28 days)");
+  await page.getByRole("button", { name: "Undo" }).click();
+  assert.equal(await page.locator("b:has-text('Week 2 · again')").count(), 0, "undo removes the repeat");
+  await page.getByRole("button", { name: "Push back a day" }).click();
+  await page.locator("text=Today is a pushed-back day").waitFor();
+  assert.equal(await page.getByRole("button", { name: "Repeat week 2" }).count(), 1, "the gap belongs to the week it delays");
+  await page.getByRole("tab", { name: "Month" }).click();
+  assert.equal(await page.locator("[aria-label^='October 29, plan: Run']").count(), 1, "plan day 8 moved to the 29th on the calendar");
+  await page.getByRole("tab", { name: "Today" }).click();
+  await page.locator("text=Free day: you pushed the plan back").waitFor();
+  await page.getByRole("tab", { name: "Programs" }).click();
+  await page.getByRole("button", { name: "Start again today" }).click();
+  await page.locator("text=Day 1 of 21.").waitFor();
+  await page.getByRole("button", { name: "Undo" }).click();
+  await page.locator("text=Today is a pushed-back day").waitFor();
+  await page.close();
+});
+
+test("charts: tooltip on keyboard focus, numbers table, empty state", async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await open(page, "/?demo=1#month/2026-10");
+  const fig = page.locator("figure:has-text('Minutes per week')");
+  await fig.locator("rect[aria-label^='Week of Mon 5 Oct']").focus();
+  await fig.locator("div[aria-hidden=true]:has-text('154 minutes')").waitFor();
+  await fig.locator("summary:has-text('Show numbers')").click();
+  assert.equal(await fig.locator("tbody tr").count(), 5);
+  // September's last week (28 Sep - 4 Oct) has October minutes, by design; August has none.
+  await page.getByRole("button", { name: "Previous month" }).click(); await page.getByRole("button", { name: "Previous month" }).click();
+  await page.locator("figure:has-text('No minutes logged in these weeks yet')").waitFor();
+  await open(page, "/?demo=1#programs/pf");
+  const ctl = page.locator("figure:has-text('Control over time')");
+  assert.equal(await ctl.locator("circle").count(), 12, "last 12 rated sessions");
+  await ctl.locator("rect[role=img]").last().focus();
+  await ctl.locator("div[aria-hidden=true]:has-text('/ 5')").waitFor();
+  await page.close();
+});
+
+test("Month shortcuts: arrows and T change month, but not while typing or inside the calendar", async () => {
+  const page = await browser.newPage();
+  await open(page, "/?demo=1#month/2026-10");
+  await page.locator("h1").click();
+  await page.keyboard.press("ArrowRight"); await page.locator("h2:has-text('November 2026')").waitFor();
+  await page.keyboard.press("ArrowLeft"); await page.keyboard.press("ArrowLeft"); await page.locator("h2:has-text('September 2026')").waitFor();
+  await page.keyboard.press("t"); await page.locator("h2:has-text('October 2026')").waitFor();
+  await page.locator("[aria-label^='October 15,']").focus(); await page.keyboard.press("ArrowRight");
+  assert.equal(await page.locator("h2:has-text('October 2026')").count(), 1, "calendar arrows move days, not months");
+  await page.locator("summary:has-text('Month review')").click();
+  await page.getByLabel("Goal").focus(); await page.keyboard.press("ArrowLeft"); await page.keyboard.type("t");
+  assert.equal(await page.locator("h2:has-text('October 2026')").count(), 1, "typing is never a shortcut");
+  await page.close();
+});
+
+test("swipe on the calendar changes month; the streak line explains itself", async () => {
+  const ctx = await browser.newContext({ hasTouch: true, viewport: { width: 390, height: 844 } }); const page = await ctx.newPage();
+  await open(page, "/?demo=1#month/2026-10");
+  const swipe = (x0, x1) => page.locator("#calendar").evaluate((el, [a, b]) => {
+    const t = x => new Touch({ identifier: 1, target: el, clientX: x, clientY: 400 });
+    el.dispatchEvent(new TouchEvent("touchstart", { touches: [t(a)], changedTouches: [t(a)], bubbles: true }));
+    el.dispatchEvent(new TouchEvent("touchend", { touches: [], changedTouches: [t(b)], bubbles: true }));
+  }, [x0, x1]);
+  await swipe(300, 120); await page.locator("h2:has-text('November 2026')").waitFor();
+  await swipe(120, 300); await page.locator("h2:has-text('October 2026')").waitFor();
+  await swipe(200, 170); assert.equal(await page.locator("h2:has-text('October 2026')").count(), 1, "short drags are ignored");
+  await open(page, "/?demo=1#today");
+  await page.locator("text=Current streak: 13 days, since Sun 11 Oct.").waitFor(); // demo: 28th blank, rests neutral, 10th missed
+  await page.locator("text=Before that, Sat 10 Oct was missed.").waitFor();
+  await ctx.close();
+});

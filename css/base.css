@@ -21,3 +21,8 @@ button:active:not(:disabled){transform:translateY(1px)}
 .skip-link:focus{top:12px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}button:active:not(:disabled){transform:none}}
+/* Chart focus ring: only for keyboard focus, so mouse hover stays quiet. */
+.dj-focus-only{display:none}
+svg:has(rect:focus-visible) .dj-focus-only{display:inline}
+/* Hints that only make sense with a keyboard and mouse. */
+@media not (hover:hover){.dj-hover-only{display:none}}

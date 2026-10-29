@@ -1,6 +1,6 @@
 import React from "react";
 import { DS, TODAY } from "../env.js";
-import { MOTTOS, DEFAULT_MOTTO, STATES, STAGES, PLAN_DAYS, iso, addDays, dayDiff, parseISO, monthKey, runIdx, runInfo, planLine, pfHelpers } from "../logic.js";
+import { MOTTOS, DEFAULT_MOTTO, STATES, STAGES, PLAN_DAYS, iso, addDays, fmtDate, parseISO, monthKey, runIdx, runInfo, planLine, planPos, planSeq, isRepeat, currentStreak, pfHelpers } from "../logic.js";
 import { words } from "../words.js";
 import { useBreakpoint } from "../layout.js";
 import { dayCell, onCalendarKey } from "./Sheet.jsx";
@@ -21,12 +21,14 @@ export function Today({ state, update, updatePf, toggleRun, onOpenDay, onGo }) {
   const h = pfHelpers(state.pf, TODAY);
 
   // Workout
-  const ri = runIdx(TODAY, state.plan.start), info = ri >= 0 ? runInfo(ri, state.plan.recovery) : null;
+  const ri = runIdx(TODAY, state.plan), info = ri >= 0 ? runInfo(ri, state.plan.recovery) : null;
   const setStatus = s => s === e.s ? update(K, { s: undefined, m: undefined })
     : update(K, { s, m: e.m || (s === "done" && info && info.mins ? info.mins : undefined) });
 
   // Running plan
-  const daysTo = state.plan.start ? dayDiff(parseISO(state.plan.start), TODAY) : null;
+  const pos = planPos(state.plan, TODAY), daysTo = state.plan.start ? -pos : null;
+  const gapDay = !!state.plan.start && pos >= 0 && pos < planSeq(state.plan).length && ri < 0;
+  const streak = currentStreak(state.days, TODAY);
 
   // Practice / test
   const test = h.testFor(K), pday = h.isPracticeDay(TODAY), planned = !!state.pf.start && (test || pday);
@@ -52,12 +54,13 @@ export function Today({ state, update, updatePf, toggleRun, onOpenDay, onGo }) {
       {e.s && e.s !== "missed" && <Field label="Minutes" as="number" min={0} max={600} inputMode="numeric" value={e.m || ""} onChange={ev => update(K, { m: +ev.target.value || undefined })} placeholder="e.g. 30" inputStyle={{ width: 120 }} />}
     </section>
 
-    {(info || (daysTo !== null && daysTo > 0) || !state.plan.start) && <section aria-labelledby="t-run" style={card}>
+    {(info || gapDay || (daysTo !== null && daysTo > 0) || !state.plan.start) && <section aria-labelledby="t-run" style={card}>
       <h3 id="t-run" style={h3}>Running plan</h3>
       {info ? <>
-        <p style={hint}>Day {ri + 1} of {PLAN_DAYS} · {planLine(info)}{info.mins ? ` · ~${info.mins} min` : ""}</p>
+        <p style={hint}>Day {ri + 1} of {PLAN_DAYS}{isRepeat(state.plan, pos) ? " (again)" : ""} · {planLine(info)}{info.mins ? ` · ~${info.mins} min` : ""}</p>
         <Pill pressed={!!e.run} onClick={() => toggleRun(K)}>{e.run ? "Done ✓" : "Mark done"}</Pill>
-      </> : daysTo > 0 ? <p style={{ ...hint, margin: 0 }}>Starts in {daysTo} day{daysTo === 1 ? "" : "s"}.</p>
+      </> : gapDay ? <p style={{ ...hint, margin: 0 }}>Free day: you pushed the plan back. It picks up tomorrow.</p>
+        : daysTo > 0 ? <p style={{ ...hint, margin: 0 }}>Starts in {daysTo} day{daysTo === 1 ? "" : "s"}.</p>
         : <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}><p style={{ ...hint, margin: 0 }}>No running plan yet.</p><Button variant="ghost" onClick={() => onGo({ view: "programs", sub: "run" })} style={{ minHeight: 44 }}>Set a start date</Button></div>}
     </section>}
 
@@ -91,6 +94,8 @@ export function Today({ state, update, updatePf, toggleRun, onOpenDay, onGo }) {
         <DowHeader labels={phone ? ["M", "T", "W", "T", "F", "S", "S"] : undefined} trailing={null} />
         {week.map(d => { const { key, ...cell } = dayCell(state, d, { compact: phone, onOpenDay }); return <SheetCell key={key} {...cell} />; })}
       </div>
+      <p style={{ margin: "10px 0 0", fontWeight: 600 }}>Current streak: {streak.length} day{streak.length === 1 ? "" : "s"}{streak.since && streak.length > 0 ? `, since ${fmtDate(parseISO(streak.since))}` : ""}.</p>
+      {streak.brokenBy && <p style={{ ...hint, margin: "2px 0 0" }}>{streak.length ? "Before that, " : ""}{streak.length ? fmtDate(parseISO(streak.brokenBy.key)) : `${fmtDate(parseISO(streak.brokenBy.key))}`} {streak.brokenBy.reason === "missed" ? "was missed" : "had nothing logged"}. Rest days don't break a streak.</p>}
       <p style={{ ...hint, marginTop: 8 }}>Tap a day to edit it. Older days are under <Button variant="ghost" onClick={() => onGo({ view: "month" })} style={{ padding: "2px 8px", fontSize: "var(--text-small)" }}>Month</Button>.</p>
     </section>
   </>;

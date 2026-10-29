@@ -2,7 +2,8 @@ import React from "react";
 import { DS, TODAY } from "../env.js";
 import { words } from "../words.js";
 import { useBreakpoint, autoGrid } from "../layout.js";
-import { PLAN, PLAN_DAYS, PLAN_RUNS, WEEKS, STAGES, DAYNAMES, RULES, iso, fmtDate, sameDay, longest, addDays, dayDiff, parseISO, runDate, runKey, runInfo, planDone, pfHelpers } from "../logic.js";
+import { PLAN, PLAN_DAYS, PLAN_RUNS, WEEKS, STAGES, DAYNAMES, RULES, iso, fmtDate, sameDay, longest, addDays, runInfo, planDone, planSeq, planPos, planSlots, planWeeks, currentWeekGroup, isRepeat, runIdx, controlSeries, pfHelpers } from "../logic.js";
+import { LineChart } from "./Charts.jsx";
 const { Toggle, Rule, Field, Pill, Stage, Stat, Strip, Tip, Lanes, DayCard, Tab, TabList, Button } = DS;
 
 const rulesGrid = autoGrid(200);
@@ -12,47 +13,60 @@ const h2 = { font: "700 var(--text-title)/1.1 var(--font-display)", letterSpacin
 const h3 = { font: "700 var(--text-subhead)/1.2 var(--font-display)", letterSpacing: ".01em", margin: "0 0 6px" };
 
 function Rules() { return <div style={rulesGrid}>{RULES.map(([t, b]) => <Rule key={t} title={t}>{b}</Rule>)}</div>; }
-const planRange = start => start ? `${fmtDate(parseISO(start))} to ${fmtDate(runDate(start, PLAN_DAYS - 1))}` : "not started";
 
 // Programs: one segmented switch between the running plan and the pelvic-floor program.
-export function ProgramsView({ state, sub, onSub, setPlan, setPf, toggleRun }) {
+export function ProgramsView({ state, sub, onSub, setPlan, setPf, toggleRun, onPlanAction }) {
   const w = words(state);
   return <>
     <TabList label="Programs" size="sm" style={{ marginBottom: 16, borderBottom: "1px solid var(--line)", borderRadius: 0, paddingBottom: 6, display: "flex" }}>
       {[["run", "Running plan"], ["pf", w.programTab]].map(([k, l]) => <Tab key={k} id={`ptab-${k}`} aria-controls="ppanel" selected={sub === k} onClick={() => onSub(k)}>{l}</Tab>)}
     </TabList>
     <div id="ppanel" role="tabpanel" aria-labelledby={`ptab-${sub}`}>
-      {sub === "run" ? <RunPlanView state={state} setPlan={setPlan} toggleRun={toggleRun} /> : <PFView state={state} setPf={setPf} />}
+      {sub === "run" ? <RunPlanView state={state} setPlan={setPlan} toggleRun={toggleRun} onPlanAction={onPlanAction} /> : <PFView state={state} setPf={setPf} />}
     </div>
   </>;
 }
 
-function RunPlanView({ state, setPlan, toggleRun }) {
+function RunPlanView({ state, setPlan, toggleRun, onPlanAction }) {
   const bp = useBreakpoint();
-  const start = state.plan.start, rec = state.plan.recovery;
+  const plan = state.plan, start = plan.start, rec = plan.recovery;
   const done = planDone(state);
   const total = done.filter(Boolean).length;
   const streak = longest(done.map(v => v ? 1 : 0));
-  const daysTo = start ? dayDiff(parseISO(start), TODAY) : null;
-  const status = daysTo === null ? "Set a start date to put the plan on your calendar." : daysTo > 0 ? `Starts in ${daysTo} day${daysTo === 1 ? "" : "s"}.` : daysTo > -PLAN_DAYS ? `Day ${1 - daysTo} of ${PLAN_DAYS}.` : "Plan complete window has passed. Repeat any week anytime.";
+  // Without a start date the plan still shows (undated) so it can be read before committing.
+  const groups = planWeeks(start ? plan : { start: iso(TODAY) });
+  const slots = planSlots(plan), len = planSeq(plan).length, pos = planPos(plan, TODAY), inPlan = !!start && pos >= 0 && pos < len;
+  const ri = runIdx(TODAY, plan), week = currentWeekGroup(plan, TODAY);
+  const status = !start ? "Set a start date to put the plan on your calendar."
+    : pos < 0 ? `Starts in ${-pos} day${pos === -1 ? "" : "s"}.`
+    : pos < len ? (ri >= 0 ? `Day ${ri + 1} of ${PLAN_DAYS}${isRepeat(plan, pos) ? ", again" : ""}.` : "Today is a pushed-back day; the plan continues tomorrow.")
+    : "The plan has finished. Start again any time, or repeat it from a new date.";
+  const cols = bp === "desktop" ? 7 : bp === "phone" ? 3 : 4;
   return <>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 14 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 10 }}>
       <div><h2 style={h2}>{PLAN_DAYS}-day running start</h2>
-        <p style={{ margin: "2px 0 0", color: "var(--ink-2)" }}>{start ? `${planRange(start)}. ` : ""}Run/walk intervals building to 8 minutes non-stop.</p>
+        <p style={{ margin: "2px 0 0", color: "var(--ink-2)" }}>{start ? `${fmtDate(slots[0].date)} to ${fmtDate(slots[slots.length - 1].date)}. ` : ""}Run/walk intervals building to 8 minutes non-stop.</p>
         <p style={{ margin: "2px 0 0", color: "var(--ink-2)" }}>{status}</p></div>
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "flex-end" }}>
         <Field label="Plan start" as="date" value={start || ""} onChange={e => setPlan({ start: e.target.value || null })} />
         <Toggle checked={rec} onChange={v => setPlan({ recovery: v })}>Rest days become recovery walks</Toggle>
       </div>
     </div>
+    {start && <div role="group" aria-label="Adjust the plan" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+      {inPlan && week && <Button variant="ghost" onClick={() => onPlanAction("repeat")} style={{ minHeight: 44 }}>Repeat week {week.week + 1}</Button>}
+      {inPlan && <Button variant="ghost" onClick={() => onPlanAction("push")} style={{ minHeight: 44 }}>Push back a day</Button>}
+      <Button variant="ghost" onClick={() => onPlanAction("restart")} style={{ minHeight: 44 }}>Start again today</Button>
+    </div>}
     <Lanes value={total} max={PLAN_DAYS} word="Day" />
-    {WEEKS.map((w, wi) => { const wdone = [0, 1, 2, 3, 4, 5, 6].filter(k => done[wi * 7 + k]).length;
-      // Desktop: label column + 7 cards. Tablet/phone: label row on top, cards in 4 / 3 columns.
-      const wide = bp === "desktop";
-      return <section key={w[0]} aria-label={w[0]} style={{ display: "grid", gridTemplateColumns: wide ? "130px repeat(7,minmax(0,1fr))" : `repeat(${bp === "phone" ? 3 : 4},minmax(0,1fr))`, gap: 8, marginBottom: wide ? 10 : 18 }}>
-        <div style={wide ? { padding: "10px 4px" } : { gridColumn: "1 / -1", display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}><b style={{ display: "block", font: "700 var(--text-subhead) var(--font-display)", letterSpacing: ".01em" }}>{w[0]}</b><span style={{ color: "var(--ink-2)", fontSize: "var(--text-small)", lineHeight: 1.2, display: "block" }}>{w[1]}</span><div style={{ marginTop: wide ? 8 : 0, marginLeft: wide ? 0 : "auto", font: "700 var(--text-body) var(--font-display)", letterSpacing: ".01em" }}>{wdone}/7 done</div></div>
-        {[0, 1, 2, 3, 4, 5, 6].map(k => { const i = wi * 7 + k, n = i + 1, info = runInfo(i, rec); const date = start ? runDate(start, i) : null;
-          return <DayCard key={n} n={n} date={date ? fmtDate(date) : ""} kind={info.kind} label={info.label} what={info.what + (info.kind === "rest" && rec && n === 20 ? ". Big day tomorrow." : "")} extra={info.extra} mins={info.mins} done={!!done[i]} today={!!date && sameDay(date, TODAY)} onClick={() => start && toggleRun(runKey(start, i))} />; })}
+    {groups.map((g, gi) => { const w = g.week === null ? null : WEEKS[g.week];
+      const planned = g.slots.filter(sl => sl.i !== null), wdone = planned.filter(sl => (state.days[sl.key] || {}).run).length;
+      const title = w ? `${w[0]}${g.again ? " · again" : ""}` : "Pushed back";
+      // Week label on top at every width, so a week with a pushed-back day can wrap cleanly.
+      return <section key={gi} aria-label={title} style={{ display: "grid", gridTemplateColumns: `repeat(${cols},minmax(0,1fr))`, gap: 8, marginBottom: 16 }}>
+        <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}><b style={{ font: "700 var(--text-subhead) var(--font-display)", letterSpacing: ".01em" }}>{title}</b>{w && <span style={{ color: "var(--ink-2)", fontSize: "var(--text-small)" }}>{w[1]}</span>}{planned.length > 0 && <span style={{ marginLeft: "auto", font: "700 var(--text-body) var(--font-display)", letterSpacing: ".01em" }}>{wdone}/{planned.length} done</span>}</div>
+        {g.slots.map(sl => { if (sl.i === null) return <div key={sl.key} style={{ border: "1.5px dashed var(--line)", borderRadius: "var(--radius-md)", padding: 10, color: "var(--ink-2)", fontSize: "var(--text-small)", display: "flex", flexDirection: "column", gap: 2 }}><b style={{ font: "700 var(--text-body) var(--font-display)", color: "var(--ink)" }}>Pushed back</b>{start && fmtDate(sl.date)}<span>Free day; the plan picks up the next day.</span></div>;
+          const n = sl.i + 1, info = runInfo(sl.i, rec);
+          return <DayCard key={sl.key} n={n} date={start ? fmtDate(sl.date) : ""} kind={info.kind} label={info.label} what={info.what + (info.kind === "rest" && rec && n === 20 ? ". Big day tomorrow." : "")} extra={info.extra} mins={info.mins} done={!!(state.days[sl.key] || {}).run} today={!!start && sameDay(sl.date, TODAY)} onClick={() => start && toggleRun(sl.key)} />; })}
       </section>; })}
     <div style={statGrid}><Stat value={streak} label="Longest streak" /><Stat value={`${PLAN.filter((p, i) => (p[0] === "run" || p[0] === "finish") && done[i]).length}/${PLAN_RUNS}`} label="Runs completed" /></div>
     <Rules />
@@ -72,6 +86,7 @@ function PFView({ state, setPf }) {
   const ctrls = days.map(d => state.days[iso(d)] || {}).filter(e => e.practice === "yes" && e.control);
   const avg = a => a.length ? (a.reduce((x, e) => x + e.control, 0) / a.length).toFixed(1) : "–";
   const TKEY = iso(TODAY);
+  const series = controlSeries(state.days, TODAY);
   return <section aria-labelledby="pf-title">
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 14 }}>
       <div><h2 id="pf-title" style={h2}>{w.programTitle}</h2>
@@ -90,6 +105,8 @@ function PFView({ state, setPf }) {
       {guide && <Tip>Keep test conditions the same each time: same lubricant, similar time of day, and no practice the day before.</Tip>}</>
       : <Tip>Set a program start date, or answer on the Today screen, to schedule your four {w.test.toLowerCase()}s.</Tip>}
     <div style={statGrid}><Stat value={streak} label="Days in a row with 3 sets" /><Stat value={pracs.length} label={`${w.practice} sessions, last 7 days`} /><Stat value={avg(ctrls.slice(-5))} label="Average control, last 5 sessions (out of 5)" /></div>
+    <LineChart title="Control over time" desc={`Your control rating for the last ${Math.min(12, series.length) || 12} ${w.practice.toLowerCase()} and ${w.test.toLowerCase()}s, 1 to 5.`} unit="Control" yMin={1} yMax={5} empty={`No rated ${w.practice.toLowerCase()} sessions yet. Rate your control after a session to see the trend.`}
+      data={series.map(d => ({ key: d.key, label: fmtDate(d.date).slice(4), long: fmtDate(d.date), value: d.value }))} />
     <h3 style={{ ...h3, margin: 0 }}>Last 28 days</h3>
     <Strip label={`${w.sets} and ${w.practice.toLowerCase()}, last 28 days`} columns={phone ? 7 : 14} days={days.map(d => { const e = state.days[iso(d)] || {}; return { n: d.getDate(), sets: e.sets || 0, practice: e.practice === "yes", title: `${fmtDate(d)}: ${e.sets ?? 0} of 3 sets${e.practice === "yes" ? ", practice" : ""}` }; })} />
     <Tip>Darker squares mean more sets done. A blue underline marks a {w.practice.toLowerCase()} day.</Tip>
