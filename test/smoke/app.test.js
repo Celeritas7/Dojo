@@ -3,7 +3,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
-import { createReadStream, existsSync, mkdirSync, statSync } from "node:fs";
+import { createReadStream, existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
 import { chromium } from "playwright";
 
@@ -40,7 +40,7 @@ test("loads with no console errors, no CDN requests, and renders the demo", asyn
   const errors = await open(page, "/?demo=1");
   assert.deepEqual(errors, []); assert.deepEqual(external, []);
   await assert.doesNotReject(page.locator("h2:has-text('October 2026')").waitFor());
-  assert.equal(await page.locator("[aria-label='October 10, Missed']").count(), 1);
+  assert.equal(await page.locator("[aria-label^='October 10, Missed']").count(), 1);
   assert.match(await page.locator("text=Days trained").locator("..").innerText(), /20\/24/);
   await page.screenshot({ path: join(SHOTS, "desktop-sheet.png"), fullPage: true });
   await page.getByRole("tab", { name: "Running plan" }).click();
@@ -56,17 +56,17 @@ test("a logged day survives a reload; demo mode never writes storage", async () 
   assert.equal(await page.evaluate(() => localStorage.length), 0);
   await page.locator("[aria-label='October 15']").click();
   await page.getByRole("button", { name: "Light / partial" }).click();
-  await page.getByLabel("Minutes").fill("15");
+  await page.getByLabel("Minutes", { exact: true }).fill("15");
   await page.getByRole("button", { name: "Save day" }).click();
-  assert.equal(await page.locator("[aria-label='October 15, Light / partial']").count(), 1);
+  assert.equal(await page.locator("[aria-label^='October 15, Light / partial']").count(), 1);
   await page.reload(); await page.waitForSelector("[aria-label$=' calendar']");
-  assert.equal(await page.locator("[aria-label='October 15, Light / partial']").count(), 1);
+  assert.equal(await page.locator("[aria-label^='October 15, Light / partial']").count(), 1);
   const stored = JSON.parse(await page.evaluate(() => localStorage.getItem("dojo.state")));
   assert.deepEqual(stored.days["2026-10-15"], { s: "light", m: 15 });
   await page.screenshot({ path: join(SHOTS, "phone-sheet.png"), fullPage: true });
   // Demo mode must not touch what is stored.
   await open(page, "/?demo=1");
-  await page.locator("[aria-label='October 3, Rest day']").click();
+  await page.locator("[aria-label^='October 3, Rest day']").click();
   await page.getByRole("button", { name: "Clear day" }).click();
   await page.waitForTimeout(100);
   assert.deepEqual(JSON.parse(await page.evaluate(() => localStorage.getItem("dojo.state"))), stored);
@@ -91,7 +91,7 @@ test("check-in starts unanswered, writes today's record and announces the progra
 test("day editor: focus stays inside, Escape and the close button dismiss, minutes need a status", async () => {
   const ctx = await browser.newContext(); const page = await ctx.newPage();
   await open(page, "/?demo=1");
-  await page.locator("[aria-label='October 15, Workout done']").focus();
+  await page.locator("[aria-label^='October 15, Workout done']").focus();
   await page.keyboard.press("Enter");
   await page.locator("[role=dialog]").waitFor();
   assert.ok(await page.evaluate(() => !!document.activeElement.closest("[role=dialog]")), "focus moved into the dialog");
@@ -101,31 +101,31 @@ test("day editor: focus stays inside, Escape and the close button dismiss, minut
   await page.keyboard.press("Escape");
   assert.equal(await page.locator("[role=dialog]").count(), 0, "Escape closes");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "");
-  assert.equal(await page.evaluate(() => document.activeElement.getAttribute("aria-label")), "October 15, Workout done", "focus returned to the cell");
-  await page.locator("[aria-label='October 15, Workout done']").click();
+  assert.equal(await page.evaluate(() => document.activeElement.getAttribute("aria-label")), "October 15, Workout done, 25 minutes, 3 of 3 Kegel sets", "focus returned to the cell");
+  await page.locator("[aria-label^='October 15, Workout done']").click();
   await page.getByRole("button", { name: "Close without saving" }).click();
   assert.equal(await page.locator("[role=dialog]").count(), 0);
   // Minutes without a status are refused with a message; picking a status clears it.
-  await page.locator("[aria-label='October 30']").click();
-  await page.getByLabel("Minutes").fill("25");
+  await page.locator("[aria-label^='October 30,']").click();
+  await page.getByLabel("Minutes", { exact: true }).fill("25");
   await page.getByRole("button", { name: "Save day" }).click();
   await page.locator("[role=alert]:has-text('Choose Done, Light, Missed or Rest')").waitFor();
   assert.equal(await page.locator("[role=dialog]").count(), 1);
   await page.getByRole("button", { name: "Light / partial", exact: true }).click();
   assert.equal(await page.locator("[role=alert]").count(), 0);
   await page.getByRole("button", { name: "Save day" }).click();
-  assert.equal(await page.locator("[aria-label='October 30, Light / partial']").count(), 1);
+  assert.equal(await page.locator("[aria-label^='October 30, Light / partial']").count(), 1);
   await ctx.close();
 });
 
 test("clear day can be undone from the toast", async () => {
   const ctx = await browser.newContext(); const page = await ctx.newPage();
   await open(page, "/?demo=1");
-  await page.locator("[aria-label='October 15, Workout done']").click();
+  await page.locator("[aria-label^='October 15, Workout done']").click();
   await page.getByRole("button", { name: "Clear day" }).click();
   assert.equal(await page.locator("[aria-label='October 15']").count(), 1, "cleared");
   await page.getByRole("button", { name: "Undo" }).click();
-  assert.equal(await page.locator("[aria-label='October 15, Workout done']").count(), 1, "restored");
+  assert.equal(await page.locator("[aria-label^='October 15, Workout done']").count(), 1, "restored");
   await ctx.close();
 });
 
@@ -135,7 +135,7 @@ test("ticking a plan day shows on the sheet; past empty days are blank; Today bu
   await page.getByRole("tab", { name: "Running plan" }).click();
   await page.locator("button", { hasText: "Wed 28 Oct" }).first().click();
   await page.getByRole("tab", { name: "Monthly sheet" }).click();
-  assert.equal(await page.locator("[aria-label='October 28, Workout done']").count(), 1, "plan tick marks the sheet day done");
+  assert.equal(await page.locator("[aria-label^='October 28, Workout done']").count(), 1, "plan tick marks the sheet day done");
   assert.match(await page.locator("text=Days trained").locator("..").innerText(), /21\/24/);
   await page.getByRole("button", { name: "Previous month" }).click();
   await page.locator("h2:has-text('September 2026')").waitFor();
@@ -173,6 +173,60 @@ test("resizing across the phone breakpoint and back leaves the calendar intact",
   assert.equal(await heads(), "M,T,W,T,F,S,S,Wk");
   await page.setViewportSize({ width: 1280, height: 900 }); await page.waitForTimeout(100);
   assert.equal(await heads(), "Mon,Tue,Wed,Thu,Fri,Sat,Sun,Week");
+  await page.close();
+});
+
+test("accessibility: axe finds no WCAG 2.1 AA violations in key states, light and dark", async () => {
+  const AXE = readFileSync(join(ROOT, "node_modules/axe-core/axe.min.js"), "utf8");
+  for (const colorScheme of ["light", "dark"]) for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 900 }]) {
+    const page = await browser.newPage({ viewport, colorScheme });
+    await open(page, "/?demo=1");
+    for (const s of ["Running plan:", "Pelvic floor program", "Backup and data"]) await page.locator(`summary:has-text('${s}')`).click();
+    const scan = async where => { await page.addScriptTag({ content: AXE }); const r = await page.evaluate(() => axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] } }));
+      assert.deepEqual(r.violations.map(v => `${v.id}: ${v.nodes[0].target.join(" ")}`), [], `${colorScheme} ${viewport.width} ${where}`); };
+    await scan("sheet");
+    await page.locator("[aria-label^='October 15, Workout done']").click(); await scan("editor");
+    await page.keyboard.press("Escape");
+    await page.getByRole("tab", { name: "Running plan" }).click(); await scan("running plan");
+    await page.close();
+  }
+});
+
+test("reflow at 320 px (400% zoom): no horizontal scroll with every section open", async () => {
+  const page = await browser.newPage({ viewport: { width: 320, height: 700 } });
+  await open(page, "/?demo=1");
+  for (const s of ["Running plan:", "Pelvic floor program", "Backup and data"]) await page.locator(`summary:has-text('${s}')`).click();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
+  await page.getByRole("tab", { name: "Running plan" }).click();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
+  await page.close();
+});
+
+test("calendar: full day labels, arrow keys move between days, skip link lands on it", async () => {
+  const page = await browser.newPage();
+  await open(page, "/?demo=1");
+  assert.equal(await page.locator("[aria-label='October 14, Workout done, 34 minutes, 3 of 3 Kegel sets, test done']").count(), 1);
+  assert.equal(await page.locator("[aria-label='October 28, plan: Run, test planned, today']").count(), 1);
+  await page.keyboard.press("Tab");
+  assert.equal(await page.evaluate(() => document.activeElement.textContent), "Skip to calendar");
+  await page.keyboard.press("Enter");
+  assert.equal(await page.evaluate(() => document.activeElement.id), "calendar");
+  await page.locator("[aria-label^='October 15,']").focus();
+  await page.keyboard.press("ArrowDown");
+  assert.match(await page.evaluate(() => document.activeElement.getAttribute("aria-label")), /^October 22,/);
+  await page.keyboard.press("ArrowLeft");
+  assert.match(await page.evaluate(() => document.activeElement.getAttribute("aria-label")), /^October 21,/);
+  await page.close();
+});
+
+test("undo toast stays while hovered", async () => {
+  const page = await browser.newPage();
+  await open(page, "/?demo=1");
+  await page.locator("[aria-label^='October 15, Workout done']").click();
+  await page.getByRole("button", { name: "Clear day" }).click();
+  await page.getByRole("button", { name: "Undo" }).hover();
+  await page.waitForTimeout(8500);
+  assert.equal(await page.getByRole("button", { name: "Undo" }).count(), 1, "still there after the normal 8 s");
   await page.close();
 });
 

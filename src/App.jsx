@@ -21,6 +21,8 @@ export function App() {
   const [toast, setToast] = React.useState(null); // { text, action?: { label, onClick } }
   const timer = React.useRef(null);
   const flash = (text, action) => { setToast({ text, action }); clearTimeout(timer.current); timer.current = setTimeout(() => setToast(null), action ? 8000 : 2000); };
+  const holdToast = () => clearTimeout(timer.current);
+  const releaseToast = () => { clearTimeout(timer.current); timer.current = setTimeout(() => setToast(null), 4000); };
 
   // Persist every change (except in demo mode, which must never overwrite real data).
   const first = React.useRef(true);
@@ -46,6 +48,7 @@ export function App() {
   // Sections report their real open state; storing it (rather than flipping) keeps code-opened sections open.
   const setOpen = key => open => setDet(d => d[key] === open ? d : { ...d, [key]: open });
   return <div style={{ maxWidth: 1080, margin: "0 auto", padding: "20px 16px 48px" }}>
+    {view === "sheet" && <a className="skip-link" href="#calendar">Skip to calendar</a>}
     <Header view={view} onView={setView} />
     <section><Checkin state={state} open={ciOpen} setOpen={setCiOpen} update={onCheckin} /></section>
     <main id="panel" role="tabpanel" aria-labelledby={`tab-${view}`}>
@@ -56,7 +59,7 @@ export function App() {
         <DataSection state={state} onReplace={next => setState(next || emptyState())} open={det.data} onToggle={setOpen("data")} flash={flash} />
       </> : <RunPlanView state={state} setPlan={patch => apply(s => setPlan(s, patch))} toggleRun={onToggleRun} />}
     </main>
-    <Toast toast={toast} onDismiss={() => setToast(null)} />
+    <Toast toast={toast} onDismiss={() => setToast(null)} onHold={holdToast} onRelease={releaseToast} />
     {editing && <DayEditor key={editing} state={state} dayKey={editing} onClose={() => setEditing(null)} onSave={onSave} onClear={onClear} />}
   </div>;
 }

@@ -55,6 +55,7 @@ export function RunPlanView({ state, setPlan, toggleRun }) {
 }
 
 export function PFDetails({ id, state, setPf, open, onToggle }) {
+  const phone = useBreakpoint() === "phone";
   const pf = state.pf; const h = pfHelpers(pf, TODAY); const si = h.stageIdx();
   const days = []; for (let i = 27; i >= 0; i--) days.push(addDays(TODAY, -i));
   let streak = 0; for (let i = days.length - 1; i >= 0; i--) { const e = state.days[iso(days[i])]; if (e && e.sets >= 3) streak++; else if (i === days.length - 1) continue; else break; }
@@ -80,7 +81,7 @@ export function PFDetails({ id, state, setPf, open, onToggle }) {
       : <Tip>Set a program start date or answer today's check-in to schedule your four test sessions.</Tip>}
     <div style={statGrid}><Stat value={streak} label="Days in a row with 3 sets" /><Stat value={pracs.length} label="Practice sessions, last 7 days" /><Stat value={avg(ctrls.slice(-5))} label="Avg control, last 5 sessions (of 5)" /></div>
     <h3 style={{ ...h3, margin: 0 }}>Last 28 days</h3>
-    <Strip label="Kegel sets and practice, last 28 days" days={days.map(d => { const e = state.days[iso(d)] || {}; return { n: d.getDate(), sets: e.sets || 0, practice: e.practice === "yes", title: `${fmtDate(d)}: ${e.sets ?? 0} of 3 sets${e.practice === "yes" ? ", practice" : ""}` }; })} />
+    <Strip label="Kegel sets and practice, last 28 days" columns={phone ? 7 : 14} days={days.map(d => { const e = state.days[iso(d)] || {}; return { n: d.getDate(), sets: e.sets || 0, practice: e.practice === "yes", title: `${fmtDate(d)}: ${e.sets ?? 0} of 3 sets${e.practice === "yes" ? ", practice" : ""}` }; })} />
     <Tip>Darker squares mean more sets done. A blue underline marks a control practice day.</Tip>
     <Tip>Squeeze only the pelvic floor, not your stomach, thighs or buttocks, and keep breathing. The relaxation half of each rep matters as much as the squeeze.</Tip>
     <Tip>Daily squeezes are fine. For practice sessions, 3–4 a week is enough to improve; daily is okay too, but compare your control scores after a rest day versus back-to-back days and follow what your own numbers show.</Tip>

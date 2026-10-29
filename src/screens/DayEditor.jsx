@@ -18,17 +18,21 @@ export function DayEditor({ state, dayKey: k, onClose, onSave, onClear }) {
   return <Dialog open title={fmtDate(date)} onClose={onClose} onClear={() => onClear(k)} onSave={save} error={error}>
     {info && <DialogSection title={`Running plan, day ${ri + 1}`} first>
       <p style={{ fontSize: 14, color: "var(--ink-2)", margin: "0 0 6px" }}>{info.label}: {info.what}{info.extra ? ", " + info.extra : ""}{info.mins ? ` (~${info.mins} min)` : ""}</p>
-      <div style={pills}><Pill pressed={ed.run === true} onClick={() => setRun(true)}>Done</Pill><Pill pressed={ed.run === false} onClick={() => setRun(false)}>Not yet</Pill></div></DialogSection>}
+      <div role="group" aria-label={`Running plan, day ${ri + 1}`} style={pills}><Pill pressed={ed.run === true} onClick={() => setRun(true)}>Done</Pill><Pill pressed={ed.run === false} onClick={() => setRun(false)}>Not yet</Pill></div></DialogSection>}
     <DialogSection title="Exercise" first={!info}>
       <StateGrid value={ed.s} onChange={v => { setEd({ ...ed, s: v }); setError(""); }} options={Object.entries(STATES).map(([value, label]) => ({ value, label }))} />
       <Field label="Minutes" as="number" min={0} max={600} inputMode="numeric" value={ed.m} onChange={ev => setEd({ ...ed, m: ev.target.value })} placeholder="e.g. 30" /></DialogSection>
-    <DialogSection title="Kegel sets"><div style={pills}>{[0, 1, 2, 3].map(n => <Pill key={n} pressed={ed.sets === n} onClick={() => setEd({ ...ed, sets: n })}>{n}</Pill>)}</div></DialogSection>
+    <DialogSection title="Kegel sets"><div role="group" aria-label="Kegel sets" style={pills}>{[0, 1, 2, 3].map(n => <Pill key={n} pressed={ed.sets === n} onClick={() => setEd({ ...ed, sets: n })}>{n}</Pill>)}</div></DialogSection>
     <DialogSection title={<>{test ? `Test session (week ${test.week})` : "Control practice"}{!planned && <span style={{ fontWeight: 400, color: "var(--ink-2)", fontSize: "var(--text-small)" }}> (not a planned day)</span>}</>}>
-      <div style={pills}><Pill pressed={ed.practice === "yes"} onClick={() => setEd({ ...ed, practice: "yes" })}>Yes</Pill><Pill pressed={ed.practice === "no"} onClick={() => setEd({ ...ed, practice: "no" })}>No</Pill></div>
+      <div role="group" aria-label={test ? "Test session done" : "Control practice done"} style={pills}><Pill pressed={ed.practice === "yes"} onClick={() => setEd({ ...ed, practice: "yes" })}>Yes</Pill><Pill pressed={ed.practice === "no"} onClick={() => setEd({ ...ed, practice: "no" })}>No</Pill></div>
       {ed.practice === "yes" && <><div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "flex-end", marginTop: 8 }}>
         {test && <Field label="Minutes until finish" as="number" min={0} step={0.5} value={ed.time} onChange={ev => setEd({ ...ed, time: ev.target.value })} inputStyle={{ width: 100 }} />}
         <Field label="Pauses" as="number" min={0} value={ed.pauses} onChange={ev => setEd({ ...ed, pauses: ev.target.value })} inputStyle={{ width: 80 }} /></div>
-        <Field label="Control" style={{ marginTop: 6 }}><div style={pills}>{[1, 2, 3, 4, 5].map(n => <Pill key={n} pressed={ed.control === n} onClick={() => setEd({ ...ed, control: n })}>{n}</Pill>)}</div></Field></>}
+        <div role="group" aria-labelledby="ed-control" aria-describedby="ed-control-scale" style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6, fontSize: "var(--text-small)", color: "var(--ink-2)" }}>
+          <span id="ed-control">Control</span>
+          <div style={pills}>{[1, 2, 3, 4, 5].map(n => <Pill key={n} pressed={ed.control === n} onClick={() => setEd({ ...ed, control: n })}>{n}</Pill>)}</div>
+          <span id="ed-control-scale" style={{ fontSize: "var(--text-caption)" }}>1 = very little, 5 = full control</span>
+        </div></>}
     </DialogSection>
   </Dialog>;
 }
