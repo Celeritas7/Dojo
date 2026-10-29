@@ -24,12 +24,15 @@ export function saveDay(state, k, ed) {
 export const clearDay = (state, k) => withDay(state, k, {});
 export const restoreDay = (state, k, rec) => withDay(state, k, rec || {});
 
-// Check-in patch for today: merges into the existing record. Starts the program on the first answer if no start is set.
+// Merge a patch into one day's record (Today view answers save as they are tapped).
+export const updateDay = (state, k, patch) => withDay(state, k, { ...(state.days[k] || {}), ...patch });
+// Same, for pelvic-floor answers: the first one also starts the program if no start is set.
 export function patchDay(state, k, patch) {
-  const next = withDay(state, k, { ...(state.days[k] || {}), ...patch });
+  const next = updateDay(state, k, patch);
   if (!next.pf.start) next.pf = { ...next.pf, start: k };
   return next;
 }
+export const setSettings = (state, patch) => ({ ...state, settings: { ...state.settings, ...patch } });
 
 // Tick/untick a plan day from the running-plan view. Ticking fills in the exercise the plan implies when
 // nothing is logged yet; unticking removes only what the tick filled in, so the sheet and the plan agree.

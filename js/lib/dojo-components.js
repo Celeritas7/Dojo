@@ -813,6 +813,7 @@ function Lanes({
   value = 0,
   max = 21,
   word = "Day",
+  showLabel = true,
   style
 }) {
   const pct = Math.min(100, max ? value / max * 100 : 0);
@@ -862,7 +863,7 @@ function Lanes({
       transition: "width .5s ease",
       width: pct + "%"
     }
-  }), /*#__PURE__*/React.createElement("span", {
+  }), showLabel && /*#__PURE__*/React.createElement("span", {
     style: {
       position: "absolute",
       top: "50%",
@@ -1326,7 +1327,7 @@ function Dialog({
       color: "var(--missed)",
       fontSize: "var(--text-small)"
     }
-  }, error), /*#__PURE__*/React.createElement("div", {
+  }, error), (onClear || onSave) && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",

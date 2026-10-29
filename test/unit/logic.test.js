@@ -58,3 +58,21 @@ test("pfHelpers: test sessions fall on the last practice day of weeks 2, 4, 6, 8
   assert.equal(pfHelpers({ start: null, pdays: [1] }, today).stageIdx(), 0);
   assert.equal(pfHelpers({ start: "2026-01-01", pdays: [1] }, today).stageIdx(), 3); // clamps at the last stage
 });
+
+import { parseRoute, formatRoute } from "../../src/route.js";
+test("routes round-trip and fall back to Today", () => {
+  for (const h of ["#today", "#month/2026-09", "#programs/run", "#programs/pf"]) assert.equal(formatRoute(parseRoute(h, "2026-10")), h);
+  assert.deepEqual(parseRoute("", "2026-10"), { view: "today", month: "2026-10", sub: "run" });
+  assert.deepEqual(parseRoute("#month/nope", "2026-10"), { view: "month", month: "2026-10", sub: "run" });
+  assert.equal(parseRoute("#programs/xyz", "2026-10").sub, "run");
+  assert.equal(parseRoute("#settings", "2026-10").view, "today");
+});
+
+import { planLine } from "../../src/logic.js";
+test("planLine drops a repeated kind label", () => {
+  assert.equal(planLine(runInfo(7, false)), "Run 2 min, walk 2 min, 6 rounds");
+  assert.equal(planLine(runInfo(5, false)), "Brisk walk");
+  assert.equal(planLine(runInfo(20, false)), "Finish: Run 8 min, walk 1 min, 3 rounds");
+  assert.equal(planLine(runInfo(1, false)), "Rest or easy stroll");
+  assert.equal(planLine(runInfo(1, true)), "Recovery: Shoes on, 10-min walk or stretch");
+});
