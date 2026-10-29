@@ -68,7 +68,9 @@ export function PFDetails({ state, setPf, open, onToggle }) {
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{[1, 2, 3, 4, 5, 6, 0].map(n => <Pill key={n} pressed={pf.pdays.includes(n)} onClick={() => setPf({ pdays: pf.pdays.includes(n) ? pf.pdays.filter(x => x !== n) : [...pf.pdays, n] })}>{DAYNAMES[n]}</Pill>)}</div></div>
     <h3 style={h3}>Test sessions</h3>
     {pf.start ? <><div style={progGrid}>{h.testDays().map(t => { const e = state.days[t.key] || {}; const has = e.practice === "yes";
-      return <Stage key={t.week} title={`Week ${t.week}`} now={t.key === TKEY}>{fmtDate(t.date)}{has ? `${e.time ? e.time + " min, " : ""}${e.pauses || 0} pauses, control ${e.control || "–"}/5` : (t.date < TODAY ? "Not logged" : "Upcoming")}</Stage>; })}</div>
+      const details = has ? [e.time && `${e.time} min`, e.pauses && `${e.pauses} pause${e.pauses === "1" ? "" : "s"}`, e.control && `control ${e.control}/5`].filter(Boolean) : [];
+      const text = !has ? (t.date < TODAY ? "Not logged" : "Upcoming") : details.length ? details.join(", ") : "Logged, details missing";
+      return <Stage key={t.week} title={`Week ${t.week}`} now={t.key === TKEY}>{fmtDate(t.date)}{text}</Stage>; })}</div>
       <Tip>Keep test conditions the same each time: same lubricant, similar time of day, and no practice the day before.</Tip></>
       : <Tip>Set a program start date or answer today's check-in to schedule your four test sessions.</Tip>}
     <div style={statGrid}><Stat value={streak} label="Days in a row with 3 sets" /><Stat value={pracs.length} label="Practice sessions, last 7 days" /><Stat value={avg(ctrls.slice(-5))} label="Avg control, last 5 sessions (of 5)" /></div>

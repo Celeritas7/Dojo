@@ -17,7 +17,8 @@ export const emptyMonth = () => ({ goal: "", target: "", routines: 0, notes: "" 
 export const emptyState = () => ({ version: VERSION, plan: { start: null, recovery: false }, pf: { start: null, pdays: [1, 3, 5, 0] }, days: {}, months: {} });
 export const monthOf = (state, key) => state.months[key] || emptyMonth();
 // A day record only keeps meaningful values: no empty strings, zeros, nulls or false.
-export const cleanDay = rec => { const out = {}; for (const f of DAY_FIELDS) { const v = rec[f]; if (v !== undefined && v !== null && v !== "" && v !== false && v !== 0) out[f] = v; } return out; };
+// Exception: `sets` keeps 0, because "0 sets today" is an answer and "not answered" is the absence of the field.
+export const cleanDay = rec => { const out = {}; for (const f of DAY_FIELDS) { const v = rec[f]; if (f === "sets" ? typeof v === "number" && v >= 0 : v !== undefined && v !== null && v !== "" && v !== false && v !== 0) out[f] = v; } return out; };
 
 // Returns a cleaned copy or throws with a readable message. Used for localStorage and for imported backups.
 export function validate(input) {

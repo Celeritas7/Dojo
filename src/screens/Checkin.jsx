@@ -5,8 +5,8 @@ const K = iso(TODAY);
 
 export function Checkin({ state, open, setOpen, update }) {
   const h = pfHelpers(state.pf, TODAY);
-  const d = { sets: 0, practice: null, pauses: "", control: 0, time: "", ...(state.days[K] || {}) };
-  const answered = d.sets > 0 || d.practice !== null;
+  const d = { sets: null, practice: null, pauses: "", control: 0, time: "", ...(state.days[K] || {}) };
+  const answered = d.sets !== null || d.practice !== null;
   const test = h.testFor(K), pday = h.isPracticeDay(TODAY);
   const testTomorrow = !!h.testFor(iso(addDays(TODAY, 1)));
   const st = STAGES[h.stageIdx()];
@@ -14,7 +14,7 @@ export function Checkin({ state, open, setOpen, update }) {
     : pday ? (testTomorrow ? "Practice day, but tomorrow is a test. Skip practice today and just do your Kegels." : "Practice day. Focus: " + st[3])
     : "Rest day for practice. Kegels only.";
   const set = patch => update(K, patch);
-  if (answered && !open) return <CheckinCard collapsed onEdit={() => setOpen(true)} summary={`Pelvic floor ${d.sets}/3 sets${d.practice === "yes" ? (test ? ", test logged" : ", practice logged") : d.practice === "no" ? ", no practice today" : ""}.`} />;
+  if (answered && !open) return <CheckinCard collapsed onEdit={() => setOpen(true)} summary={`Pelvic floor ${d.sets ?? 0}/3 sets${d.practice === "yes" ? (test ? ", test logged" : ", practice logged") : d.practice === "no" ? ", no practice today" : ""}.`} />;
   const row = { display: "flex", gap: 6, flexWrap: "wrap" };
   return <CheckinCard>
     <p style={{ color: "var(--ink-2)", fontSize: 14, margin: "2px 0 0" }}>{plan}</p>

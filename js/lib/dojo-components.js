@@ -446,7 +446,7 @@ Object.assign(__ds_scope, { HabitDot });
 
 // components/calendar/CalendarCell.jsx
 try { (() => {
-/** .cell — simple month-view day: number, big status dot, minutes */
+/** .cell — (status/Kegel dots are hidden on past days with nothing logged unless `pending`) simple month-view day: number, big status dot, minutes */
 function CalendarCell({
   day,
   status = null,
@@ -553,11 +553,12 @@ function SheetCell({
   day,
   status = null,
   run = null,
-  sets = 0,
+  sets = null,
   mins,
   practice = null,
   test = false,
   today = false,
+  pending = false,
   empty = false,
   compact = false,
   onClick,
@@ -605,7 +606,7 @@ function SheetCell({
       font: "800 17px/1 var(--font-display)",
       letterSpacing: ".01em"
     }
-  }, day), /*#__PURE__*/React.createElement(__ds_scope.HabitDot, {
+  }, day), (status || pending) && /*#__PURE__*/React.createElement(__ds_scope.HabitDot, {
     status: status,
     size: compact ? 12 : 18,
     symbol: false
@@ -614,8 +615,8 @@ function SheetCell({
     label: run.label,
     ok: run.ok,
     hideLabel: compact
-  }), /*#__PURE__*/React.createElement(__ds_scope.KegelDots, {
-    sets: sets,
+  }), (sets !== null || pending) && /*#__PURE__*/React.createElement(__ds_scope.KegelDots, {
+    sets: sets || 0,
     size: compact ? 6 : 8
   }), /*#__PURE__*/React.createElement("span", {
     style: {
@@ -1183,9 +1184,29 @@ function Dialog({
   onClose,
   clearLabel = "Clear day",
   saveLabel = "Save day",
+  error,
   fixed = true,
   style
 }) {
+  const ref = React.useRef(null);
+  // Focus the dialog on open, keep Tab inside it, close on Escape, lock the page behind it, restore focus on close.
+  React.useEffect(() => {
+    if (!open) return;
+    const el = ref.current, prev = document.activeElement, prevOverflow = document.body.style.overflow;
+    const focusables = () => [...el.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(n => !n.disabled);
+    (focusables()[0] || el).focus();
+    document.body.style.overflow = "hidden";
+    const onKey = e => {
+      if (e.key === "Escape") { e.preventDefault(); onClose && onClose(); return; }
+      if (e.key !== "Tab") return;
+      const f = focusables(); if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === el)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    el.addEventListener("keydown", onKey);
+    return () => { el.removeEventListener("keydown", onKey); document.body.style.overflow = prevOverflow; prev && prev.focus && prev.focus(); };
+  }, [open]);
   if (!open) return null;
   return /*#__PURE__*/React.createElement("div", {
     onClick: e => {
@@ -1201,12 +1222,15 @@ function Dialog({
       padding: 12
     }
   }, /*#__PURE__*/React.createElement("form", {
+    ref: ref,
+    tabIndex: -1,
     onSubmit: e => {
       e.preventDefault();
       onSave && onSave();
     },
     role: "dialog",
     "aria-modal": "true",
+    "aria-label": typeof title === "string" ? title : undefined,
     style: {
       border: "none",
       borderRadius: "var(--radius-xl)",
@@ -1217,15 +1241,50 @@ function Dialog({
       boxShadow: "var(--shadow-dialog)",
       maxHeight: "calc(100vh - 24px)",
       overflow: "auto",
+      outline: "none",
       ...style
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      gap: 8,
+      margin: "0 0 12px"
     }
   }, title && /*#__PURE__*/React.createElement("h3", {
     style: {
-      margin: "0 0 12px",
+      margin: 0,
       font: "700 24px/1.2 var(--font-display)",
       letterSpacing: ".01em"
     }
-  }, title), children, /*#__PURE__*/React.createElement("div", {
+  }, title), onClose && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: onClose,
+    "aria-label": "Close without saving",
+    style: {
+      font: "inherit",
+      cursor: "pointer",
+      border: "1.5px solid var(--line)",
+      background: "transparent",
+      color: "var(--ink-2)",
+      borderRadius: "50%",
+      width: 36,
+      height: 36,
+      flex: "none",
+      display: "grid",
+      placeItems: "center",
+      fontSize: 18,
+      lineHeight: 1
+    }
+  }, "\u2715")), children, error && /*#__PURE__*/React.createElement("p", {
+    role: "alert",
+    style: {
+      margin: "12px 0 0",
+      color: "var(--missed)",
+      fontSize: 14
+    }
+  }, error), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
