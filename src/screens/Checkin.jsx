@@ -1,29 +1,20 @@
-const { CheckinCard, Question, Pill, Field, Button } = window.DojoDesignSystem_c9e716;
-const { TODAY, STAGES, iso } = window.DojoKitData;
+import { DS, TODAY } from "../env.js";
+import { STAGES, iso, addDays, pfHelpers } from "../logic.js";
+const { CheckinCard, Question, Pill, Field, Button } = DS;
 const K = iso(TODAY);
-function pfHelpers(pf) {
-  const startDate = () => pf.start ? new Date(pf.start + "T00:00:00") : null;
-  const isPracticeDay = d => pf.pdays.includes(d.getDay());
-  const testDays = () => { const st = startDate(); if (!st) return []; const out = []; [2, 4, 6, 8].forEach(w => { for (let i = w * 7 - 1; i >= (w - 1) * 7; i--) { const d = new Date(st); d.setDate(d.getDate() + i); if (isPracticeDay(d)) { out.push({ week: w, date: d, key: iso(d) }); break; } } }); return out; };
-  const testFor = key => testDays().find(t => t.key === key) || null;
-  const stageIdx = () => { if (!pf.start) return 0; const w = Math.floor((TODAY - startDate()) / 86400000 / 7); return Math.max(0, Math.min(3, Math.floor(w / 2))); };
-  return { startDate, isPracticeDay, testDays, testFor, stageIdx };
-}
-window.pfHelpers = pfHelpers;
 
-function Checkin({ pf, open, setOpen, update }) {
-  const h = pfHelpers(pf);
-  const d = pf.days[K] || { sets: 0, practice: null, pauses: "", control: 0, time: "" };
-  const answered = d.sets > 0 || d.practice !== null;
+export function Checkin({ state, open, setOpen, update }) {
+  const h = pfHelpers(state.pf, TODAY);
+  const d = { sets: null, practice: null, pauses: "", control: 0, time: "", ...(state.days[K] || {}) };
+  const answered = d.sets !== null || d.practice !== null;
   const test = h.testFor(K), pday = h.isPracticeDay(TODAY);
-  const tomorrow = new Date(TODAY); tomorrow.setDate(tomorrow.getDate() + 1);
-  const testTomorrow = !!h.testFor(iso(tomorrow));
+  const testTomorrow = !!h.testFor(iso(addDays(TODAY, 1)));
   const st = STAGES[h.stageIdx()];
   const plan = test ? `Test session day (end of week ${test.week}). Steady realistic pace, pause only if you really need to.`
     : pday ? (testTomorrow ? "Practice day, but tomorrow is a test. Skip practice today and just do your Kegels." : "Practice day. Focus: " + st[3])
     : "Rest day for practice. Kegels only.";
-  const set = patch => update(K, { ...d, ...patch });
-  if (answered && !open) return <CheckinCard collapsed onEdit={() => setOpen(true)} summary={`Pelvic floor ${d.sets}/3 sets${d.practice === "yes" ? (test ? ", test logged" : ", practice logged") : d.practice === "no" ? ", no practice today" : ""}.`} />;
+  const set = patch => update(K, patch);
+  if (answered && !open) return <CheckinCard collapsed onEdit={() => setOpen(true)} summary={`Pelvic floor ${d.sets ?? 0}/3 sets${d.practice === "yes" ? (test ? ", test logged" : ", practice logged") : d.practice === "no" ? ", no practice today" : ""}.`} />;
   const row = { display: "flex", gap: 6, flexWrap: "wrap" };
   return <CheckinCard>
     <p style={{ color: "var(--ink-2)", fontSize: 14, margin: "2px 0 0" }}>{plan}</p>
@@ -41,4 +32,3 @@ function Checkin({ pf, open, setOpen, update }) {
     {answered && <div style={{ marginTop: 12 }}><Button onClick={() => setOpen(false)}>Done</Button></div>}
   </CheckinCard>;
 }
-window.DojoCheckin = Checkin;

@@ -13,9 +13,9 @@ if not exist "%ROOT%\index.html" (
   echo Current folder: %CD%
   pause & goto :eof
 )
-if not exist "%ROOT%\js\lib\dojo-components.js" (
-  echo Found index.html but js\lib\dojo-components.js is missing.
-  echo Re-download the full Dojo app folder.
+if not exist "%ROOT%\dist\app.js" (
+  echo Found index.html but dist\app.js is missing.
+  echo Run "npm install" and "npm run build" once, or re-download the full Dojo folder.
   pause & goto :eof
 )
 
@@ -55,7 +55,7 @@ echo.
 echo   Dojo - local server
 echo   Python:  %PY%
 echo   Serving: %ROOT%    Open: http://localhost:%PORT%/
-echo   Needs internet for React and the Barlow fonts (loaded from CDN).
+echo   Works offline: everything is bundled in dist\.
 echo   (Close this window to stop.)
 echo.
 

@@ -1,0 +1,23 @@
+{
+  "name": "dojo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dojo habit tracker: monthly sheet, 21-day running plan and pelvic-floor program.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "watch": "node scripts/build.js --watch",
+    "serve": "python3 -m http.server 8000",
+    "test": "npm run test:unit && npm run test:smoke",
+    "test:unit": "node --test \"test/unit/*.test.js\"",
+    "test:smoke": "node --test \"test/smoke/*.test.js\""
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10",
+    "playwright": "1.56.1"
+  }
+}

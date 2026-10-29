@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&display=swap");
-/* Dojo loads Barlow + Barlow Condensed from Google Fonts (as the source app does). No self-hosted binaries exist in the source. */
 :root{
   --font-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
   --font-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
