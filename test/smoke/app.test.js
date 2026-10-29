@@ -321,6 +321,7 @@ test("charts: tooltip on keyboard focus, numbers table, empty state", async () =
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await open(page, "/?demo=1#month/2026-10");
   const fig = page.locator("figure:has-text('Minutes per week')");
+  await fig.locator("rect[role=img]").first().waitFor();
   await fig.locator("rect[aria-label^='Week of Mon 5 Oct']").focus();
   await fig.locator("div[aria-hidden=true]:has-text('154 minutes')").waitFor();
   await fig.locator("summary:has-text('Show numbers')").click();
@@ -330,6 +331,8 @@ test("charts: tooltip on keyboard focus, numbers table, empty state", async () =
   await page.locator("figure:has-text('No minutes logged in these weeks yet')").waitFor();
   await open(page, "/?demo=1#programs/pf");
   const ctl = page.locator("figure:has-text('Control over time')");
+  // Charts draw after measuring their width (ResizeObserver), so wait for the marks before counting them.
+  await ctl.locator("circle").first().waitFor();
   assert.equal(await ctl.locator("circle").count(), 12, "last 12 rated sessions");
   await ctl.locator("rect[role=img]").last().focus();
   await ctl.locator("div[aria-hidden=true]:has-text('/ 5')").waitFor();
