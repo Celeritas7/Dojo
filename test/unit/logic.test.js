@@ -25,12 +25,12 @@ test("longest streak: 0 breaks, -1 (rest) is neutral", () => {
 
 test("runIdx maps dates inside the 21-day window and nothing else", () => {
   const start = "2026-10-21";
-  assert.equal(runIdx(parseISO("2026-10-20"), start), -1);
-  assert.equal(runIdx(parseISO("2026-10-21"), start), 0);
-  assert.equal(runIdx(parseISO("2026-10-28"), start), 7);
-  assert.equal(runIdx(parseISO("2026-11-10"), start), 20);
-  assert.equal(runIdx(parseISO("2026-11-11"), start), -1);
-  assert.equal(runIdx(parseISO("2026-10-21"), null), -1);
+  assert.equal(runIdx(parseISO("2026-10-20"), { start }), -1);
+  assert.equal(runIdx(parseISO("2026-10-21"), { start }), 0);
+  assert.equal(runIdx(parseISO("2026-10-28"), { start }), 7);
+  assert.equal(runIdx(parseISO("2026-11-10"), { start }), 20);
+  assert.equal(runIdx(parseISO("2026-11-11"), { start }), -1);
+  assert.equal(runIdx(parseISO("2026-10-21"), { start: null }), -1);
   assert.equal(runKey(start, 20), "2026-11-10");
   assert.equal(PLAN_DAYS, 21); assert.equal(PLAN_RUNS, 12);
 });
@@ -75,4 +75,52 @@ test("planLine drops a repeated kind label", () => {
   assert.equal(planLine(runInfo(20, false)), "Finish: Run 8 min, walk 1 min, 3 rounds");
   assert.equal(planLine(runInfo(1, false)), "Rest or easy stroll");
   assert.equal(planLine(runInfo(1, true)), "Recovery: Shoes on, 10-min walk or stretch");
+});
+
+import { planSeq, planSlots, planWeeks, isRepeat, currentStreak, weeklyMinutes, controlSeries, planDone as planDone2 } from "../../src/logic.js";
+test("schedule: default, gaps and repeats map dates to plan days", () => {
+  const plan = { start: "2026-10-21", seq: [0, 1, 2, 3, 4, 5, 6, 7, null, 8, 9, 10, 11, 12, 13, 7, 8, 9, 10, 11, 12, 13] };
+  assert.equal(planSeq({ start: "2026-10-21" }).length, 21);
+  assert.equal(runIdx(parseISO("2026-10-29"), plan), -1, "gap day is not a plan day");
+  assert.equal(runIdx(parseISO("2026-10-30"), plan), 8, "plan day 9 moved to the 30th");
+  assert.equal(runIdx(parseISO("2026-11-05"), plan), 7, "week 2 again from the 5th");
+  assert.ok(isRepeat(plan, 15)); assert.ok(!isRepeat(plan, 7));
+  const weeks = planWeeks(plan);
+  assert.deepEqual(weeks.map(w => [w.week, w.again, w.slots.length]), [[0, false, 7], [1, false, 8], [1, true, 7]]);
+  assert.equal(planSlots(plan).at(-1).key, "2026-11-11");
+  const s = { plan, days: { "2026-11-05": { run: true } } };
+  assert.equal(planDone2(s)[7], true, "a plan day is done if any of its dates is ticked");
+});
+
+test("current streak: rest is neutral, names what broke it", () => {
+  const days = { "2026-10-20": { s: "missed" }, "2026-10-21": { s: "done" }, "2026-10-22": { s: "rest" }, "2026-10-23": { s: "light" }, "2026-10-24": { s: "done" } };
+  assert.deepEqual(currentStreak(days, parseISO("2026-10-24")), { length: 3, since: "2026-10-21", brokenBy: { key: "2026-10-20", reason: "missed" } });
+  assert.deepEqual(currentStreak(days, parseISO("2026-10-25")), { length: 3, since: "2026-10-21", brokenBy: { key: "2026-10-20", reason: "missed" } }, "today not logged yet: start from yesterday");
+  assert.deepEqual(currentStreak({}, parseISO("2026-10-25")).brokenBy, { key: "2026-10-24", reason: "not logged" });
+});
+
+test("weekly minutes cover whole Monday weeks touching the month; control series is the last n rated sessions", () => {
+  const days = { "2026-09-28": { s: "done", m: 30 }, "2026-10-01": { s: "done", m: 20 }, "2026-10-05": { s: "light", m: 15 }, "2026-10-06": { m: 99 } };
+  const w = weeklyMinutes(days, "2026-10");
+  assert.deepEqual(w.map(x => [x.key, x.value]), [["2026-09-28", 50], ["2026-10-05", 15], ["2026-10-12", 0], ["2026-10-19", 0], ["2026-10-26", 0]]);
+  const c = { "2026-10-01": { practice: "yes", control: 2 }, "2026-10-03": { practice: "yes" }, "2026-10-05": { practice: "yes", control: 4 }, "2026-10-09": { practice: "yes", control: 5 } };
+  assert.deepEqual(controlSeries(c, parseISO("2026-10-08"), 2).map(x => [x.key, x.value]), [["2026-10-01", 2], ["2026-10-05", 4]]);
+});
+
+test("a pushed-back gap belongs to the week of the plan day it delays", () => {
+  const seq = [0, 1, 2, 3, 4, 5, 6, null, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+  const weeks = planWeeks({ start: "2026-10-21", seq });
+  assert.deepEqual(weeks.map(w => [w.week, w.slots.length]), [[0, 7], [1, 8], [2, 7]]);
+  assert.equal(weeks[1].slots[0].i, null);
+});
+
+import { reminderDue } from "../../src/logic.js";
+test("reminder is due after the chosen time when nothing is logged, once a day", () => {
+  const st = (on, days = {}) => ({ days, settings: { reminder: { on, time: "19:00" } } });
+  const at = (h, m) => new Date(2026, 9, 28, h, m);
+  assert.equal(reminderDue(st(true), at(18, 59), null), false, "before the time");
+  assert.equal(reminderDue(st(true), at(19, 0), null), true);
+  assert.equal(reminderDue(st(false), at(20, 0), null), false, "off");
+  assert.equal(reminderDue(st(true, { "2026-10-28": { sets: 0 } }), at(20, 0), null), false, "something logged");
+  assert.equal(reminderDue(st(true), at(20, 0), "2026-10-28"), false, "already reminded today");
 });

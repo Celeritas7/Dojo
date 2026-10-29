@@ -89,6 +89,27 @@ test("updateDay merges without starting the program; settings round-trip and def
   let s = updateDay(emptyState(), "2026-10-28", { s: "done", m: 34 });
   assert.deepEqual(s.days["2026-10-28"], { s: "done", m: 34 }); assert.equal(s.pf.start, null);
   s = setSettings(s, { discreet: true });
-  assert.deepEqual(importJSON(exportJSON(s)).settings, { discreet: true });
-  assert.deepEqual(validate({ version: 2 }).settings, { discreet: false }, "older saves without settings still load");
+  assert.deepEqual(importJSON(exportJSON(s)).settings, { discreet: true, reminder: { on: false, time: "19:00" } });
+  assert.deepEqual(validate({ version: 2 }).settings, { discreet: false, reminder: { on: false, time: "19:00" } }, "older saves without settings still load");
+  assert.deepEqual(validate({ version: 2, settings: { reminder: { on: true, time: "25:99" } } }).settings.reminder, { on: true, time: "19:00" }, "bad times fall back");
+});
+
+import { repeatWeek, pushBack, restartPlan } from "../../src/reducers.js";
+import { runIdx, parseISO, planSeq } from "../../src/logic.js";
+test("plan controls: repeat week, push back, start again", () => {
+  const base = { ...emptyState(), plan: { start: "2026-10-21", recovery: false } };
+  const today = parseISO("2026-10-29"); // plan day 9, week 2
+  const r = repeatWeek(base, today);
+  assert.deepEqual(planSeq(r.plan).slice(14, 21), [7, 8, 9, 10, 11, 12, 13], "week 2 again right after week 2");
+  assert.equal(runIdx(parseISO("2026-11-11"), r.plan), 14, "week 3 now starts 7 days later");
+  const p = pushBack(base, today);
+  assert.equal(runIdx(today, p.plan), -1); assert.equal(runIdx(parseISO("2026-10-30"), p.plan), 8);
+  const ticked = { ...base, days: { "2026-10-29": { run: true } } };
+  assert.equal(runIdx(today, pushBack(ticked, today).plan), 8, "already ticked today: the gap goes tomorrow");
+  assert.equal(pushBack(base, parseISO("2026-12-01")), base, "outside the plan: unchanged");
+  assert.equal(repeatWeek(base, parseISO("2026-10-01")), base);
+  const s = restartPlan(r, parseISO("2026-12-01"));
+  assert.deepEqual(s.plan, { start: "2026-12-01", recovery: false }, "original schedule from the new start");
+  assert.deepEqual(validate(JSON.parse(exportJSON(r))).plan.seq, planSeq(r.plan), "schedule survives a backup");
+  assert.throws(() => validate({ version: 2, plan: { start: "2026-10-21", seq: [0, 99] } }), /plan.seq/);
 });

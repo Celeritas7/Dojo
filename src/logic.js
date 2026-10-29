@@ -15,7 +15,7 @@ export const PLAN = [
 export const PLAN_DAYS = PLAN.length;
 export const PLAN_RUNS = PLAN.filter(p => p[0] === "run" || p[0] === "finish").length;
 export const WEEKS = [["Week 1","Build the habit"],["Week 2","Longer intervals"],["Week 3","Toward non-stop"]];
-export const STATES = {done:"Workout done",light:"Light / partial",missed:"Missed",rest:"Rest day"};
+export const STATES = {done:"Workout done",light:"Light / partial",rest:"Rest day",missed:"Missed"};
 export const STAGES = [
  ["Weeks 1–2","Hold 3 s, relax 3 s","10 reps, 3 times a day","Learn your arousal scale. Stop fully at 7–8, wait until it drops to about 4, then continue."],
  ["Weeks 3–4","Hold 5 s, relax 5 s","12 reps, 3 times a day","Slow down or change angle at 7 instead of stopping. Add slow belly breathing."],
@@ -42,9 +42,29 @@ export const daysInMonth = key => { const [y, m] = key.split("-").map(Number); r
 export const longest = arr => { let best = 0, cur = 0; for (const v of arr) { if (v === 1) { cur++; best = Math.max(best, cur); } else if (v === 0) cur = 0; } return best; };
 
 // ---- running plan ----
-export const runIdx = (date, planStart) => { if (!planStart) return -1; const i = dayDiff(date, parseISO(planStart)); return i >= 0 && i < PLAN_DAYS ? i : -1; };
-export const runDate = (planStart, i) => addDays(parseISO(planStart), i);
-export const runKey = (planStart, i) => iso(runDate(planStart, i));
+// The schedule is plan.seq: one entry per calendar day from plan.start, each a plan-day index (0-20) or null for a
+// pushed-back gap. Without seq it is the original 21 days in order. Ticks live on the dates (days[date].run).
+export const planSeq = plan => (plan && plan.seq) || PLAN.map((_, i) => i);
+export const planPos = (plan, date) => (plan && plan.start ? dayDiff(date, parseISO(plan.start)) : -1);
+export const runIdx = (date, plan) => { const pos = planPos(plan, date), seq = planSeq(plan); return pos >= 0 && pos < seq.length && seq[pos] !== null ? seq[pos] : -1; };
+export const runDate = (planStart, pos) => addDays(parseISO(planStart), pos);
+export const runKey = (planStart, pos) => iso(runDate(planStart, pos));
+export const planSlots = plan => (plan && plan.start ? planSeq(plan).map((i, pos) => { const date = runDate(plan.start, pos); return { pos, i, date, key: iso(date) }; }) : []);
+export const isRepeat = (plan, pos) => { const seq = planSeq(plan), i = seq[pos]; return i !== null && i !== undefined && seq.slice(0, pos).includes(i); };
+// Slots grouped into plan weeks for display; a week scheduled a second time is its own group marked `again`.
+// A pushed-back gap delays the day after it, so gaps join the group of the next plan day.
+export function planWeeks(plan) {
+  const groups = [], seen = new Set(); let cur = null, pending = [];
+  for (const s of planSlots(plan)) {
+    if (s.i === null) { pending.push(s); continue; }
+    const w = Math.floor(s.i / 7);
+    if (!cur || cur.week !== w || cur.last >= s.i) { cur = { week: w, again: seen.has(w), slots: [], last: -1 }; seen.add(w); groups.push(cur); }
+    cur.slots.push(...pending, s); pending = []; cur.last = s.i;
+  }
+  if (pending.length) { if (cur) cur.slots.push(...pending); else groups.push({ week: null, again: false, slots: pending, last: -1 }); }
+  return groups;
+}
+export const currentWeekGroup = (plan, date) => { const pos = planPos(plan, date); return planWeeks(plan).find(g => g.week !== null && g.slots.some(s => s.pos === pos)) || null; };
 export function runInfo(i, recovery) {
   const p = PLAN[i]; let kind = p[0], what = p[1], mins = p[3], label = { run: "Run", walk: "Walk", rest: "Rest", finish: "Finish" }[kind];
   if (kind === "rest" && recovery) { label = "Recovery"; what = "Shoes on, 10-min walk or stretch"; mins = 10; }
@@ -52,7 +72,42 @@ export function runInfo(i, recovery) {
 }
 // "Run 2 min, walk 2 min, 6 rounds" rather than "Run: Run 2 min, ..."; keeps the label only when the text doesn't already say it.
 export const planLine = info => (info.what.toLowerCase().includes(info.label.toLowerCase()) ? info.what : `${info.label}: ${info.what}`) + (info.extra ? `, ${info.extra}` : "");
-export const planDone = (state) => { if (!state.plan.start) return []; return PLAN.map((_, i) => !!(state.days[runKey(state.plan.start, i)] || {}).run); };
+// One flag per plan day: done if any date it was scheduled on is ticked.
+export const planDone = state => { if (!state.plan.start) return []; const done = PLAN.map(() => false); for (const s of planSlots(state.plan)) if (s.i !== null && (state.days[s.key] || {}).run) done[s.i] = true; return done; };
+
+// ---- reminders ----
+// Due when reminders are on, the chosen time has passed today, nothing is logged for today, and we haven't reminded today.
+export function reminderDue(state, now, lastReminded) {
+  const r = state.settings && state.settings.reminder; if (!r || !r.on) return false;
+  const [h, m] = r.time.split(":").map(Number), today = iso(now);
+  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m && !state.days[today] && lastReminded !== today;
+}
+
+// ---- streaks and trends ----
+const trained = e => e.s === "done" || e.s === "light";
+// Walk back from today (or yesterday, if today has nothing yet): done/light count, rest days are neutral,
+// a missed or empty day ends it. brokenBy names that day so the app can say why.
+export function currentStreak(days, today) {
+  let d = (days[iso(today)] || {}).s ? today : addDays(today, -1), length = 0, since = null;
+  for (let n = 0; n < 1000; n++, d = addDays(d, -1)) {
+    const e = days[iso(d)] || {};
+    if (trained(e)) { length++; since = iso(d); }
+    else if (e.s !== "rest") return { length, since, brokenBy: { key: iso(d), reason: e.s === "missed" ? "missed" : "not logged" } };
+  }
+  return { length, since, brokenBy: null };
+}
+// Minutes per Monday-to-Sunday week, for every week that touches the month (whole weeks, so totals are honest).
+export function weeklyMinutes(days, key) {
+  const [y, m] = key.split("-").map(Number), first = new Date(y, m - 1, 1), last = new Date(y, m, 0);
+  const out = [];
+  for (let mon = addDays(first, -((first.getDay() + 6) % 7)); mon <= last; mon = addDays(mon, 7)) {
+    let total = 0; for (let i = 0; i < 7; i++) { const e = days[iso(addDays(mon, i))] || {}; if (e.s) total += +e.m || 0; }
+    out.push({ key: iso(mon), date: mon, value: total });
+  }
+  return out;
+}
+// The last `n` practice/test sessions with a control rating, up to and including today, oldest first.
+export const controlSeries = (days, today, n = 12) => Object.keys(days).filter(k => k <= iso(today) && days[k].practice === "yes" && days[k].control).sort().slice(-n).map(k => ({ key: k, date: parseISO(k), value: days[k].control }));
 
 // ---- pelvic floor program ----
 export function pfHelpers(pf, today) {

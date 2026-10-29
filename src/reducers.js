@@ -1,12 +1,12 @@
 // Pure state transitions. Each returns a new state; nothing here touches the DOM.
 import { emptyMonth, cleanDay } from "./store.js";
-import { runIdx, runInfo, parseISO } from "./logic.js";
+import { runIdx, runInfo, parseISO, iso, planSeq, planPos, currentWeekGroup } from "./logic.js";
 
 const withDay = (state, k, rec) => { const days = { ...state.days }; const c = cleanDay(rec); if (Object.keys(c).length) days[k] = c; else delete days[k]; return { ...state, days }; };
 
 // What ticking a plan day implies for the exercise fields when nothing else is logged.
 export function runDefaults(state, k) {
-  const i = runIdx(parseISO(k), state.plan.start); if (i < 0) return null;
+  const i = runIdx(parseISO(k), state.plan); if (i < 0) return null;
   const info = runInfo(i, state.plan.recovery);
   return { s: info.kind === "rest" && !state.plan.recovery ? "rest" : "done", m: info.mins || 0 };
 }
@@ -44,5 +44,24 @@ export function toggleRun(state, k) {
   return withDay(state, k, next);
 }
 export const setPlan = (state, patch) => ({ ...state, plan: { ...state.plan, ...patch } });
+
+// Plan controls. Each returns the state unchanged when it doesn't apply (no plan, or today outside it).
+// Repeat the plan week today is in: a full copy of that week goes straight after it.
+export function repeatWeek(state, today) {
+  const g = currentWeekGroup(state.plan, today); if (!g) return state;
+  const seq = planSeq(state.plan).slice(), end = g.slots[g.slots.length - 1].pos;
+  seq.splice(end + 1, 0, ...[0, 1, 2, 3, 4, 5, 6].map(d => g.week * 7 + d));
+  return setPlan(state, { seq });
+}
+// Push the rest of the plan back a day from today (from tomorrow if today is already ticked).
+export function pushBack(state, today) {
+  const seq = planSeq(state.plan).slice(), pos = planPos(state.plan, today);
+  const at = (state.days[iso(today)] || {}).run ? pos + 1 : pos;
+  if (pos < 0 || at >= seq.length) return state;
+  seq.splice(at, 0, null);
+  return setPlan(state, { seq });
+}
+// Start the original schedule again today; ticks on earlier dates stay as history.
+export function restartPlan(state, today) { const { seq, ...plan } = state.plan; return { ...state, plan: { ...plan, start: iso(today) } }; }
 export const setPf = (state, patch) => ({ ...state, pf: { ...state.pf, ...patch } });
 export const setMonth = (state, key, patch) => ({ ...state, months: { ...state.months, [key]: { ...(state.months[key] || emptyMonth()), ...patch } } });

@@ -9,15 +9,18 @@ import { chromium } from "playwright";
 
 const ROOT = new URL("../../", import.meta.url).pathname;
 const SHOTS = join(ROOT, "test/screenshots");
-const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".woff2": "font/woff2", ".json": "application/json", ".map": "application/json" };
+const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".woff2": "font/woff2", ".json": "application/json", ".map": "application/json", ".webmanifest": "application/manifest+json", ".png": "image/png", ".svg": "image/svg+xml" };
 let server, browser, base;
+let swSuffix = ""; // appended to sw.js to simulate a new release in the update test
 
 before(async () => {
   assert.ok(existsSync(join(ROOT, "dist/app.js")), "dist/app.js missing: run `npm run build` first");
   server = http.createServer((req, res) => {
     const p = normalize(decodeURIComponent(req.url.split("?")[0])).replace(/^\/+/, "") || "index.html";
     const f = join(ROOT, p); if (!f.startsWith(ROOT) || !existsSync(f) || statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
-    res.writeHead(200, { "content-type": TYPES[extname(f)] || "application/octet-stream" }); createReadStream(f).pipe(res);
+    res.writeHead(200, { "content-type": TYPES[extname(f)] || "application/octet-stream", "cache-control": "no-cache" });
+    if (p === "sw.js" && swSuffix) return res.end(readFileSync(f, "utf8") + swSuffix);
+    createReadStream(f).pipe(res);
   });
   await new Promise(r => server.listen(0, "127.0.0.1", r));
   base = `http://127.0.0.1:${server.address().port}`;
@@ -137,7 +140,7 @@ test("day editor: focus stays inside, Escape and the close button dismiss, minut
   await page.locator("[aria-label^='October 30,']").click();
   await page.getByLabel("Minutes", { exact: true }).fill("25");
   await page.getByRole("button", { name: "Save day" }).click();
-  await page.locator("[role=alert]:has-text('Choose Done, Light, Missed or Rest')").waitFor();
+  await page.locator("[role=alert]:has-text('Choose Done, Light, Rest or Missed')").waitFor();
   await page.getByRole("button", { name: "Light / partial", exact: true }).click();
   assert.equal(await page.locator("[role=alert]").count(), 0);
   await page.getByRole("button", { name: "Save day" }).click();
@@ -288,5 +291,159 @@ test("discreet mode: no program-specific words on Today, Month or the routine pa
   await page.screenshot({ path: join(SHOTS, "phone-routine-discreet.png"), fullPage: true });
   await page.getByRole("button", { name: "Show program details" }).click();
   assert.match(await visibleText(), /arousal/i, "details appear when asked");
+  await ctx.close();
+});
+
+test("plan controls: repeat a week, push back a day, start again, each undoable", async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await open(page, "/?demo=1#programs/run");
+  await page.getByRole("button", { name: "Repeat week 2" }).click();
+  await page.locator("b:has-text('Week 2 · again')").waitFor();
+  assert.match(await page.locator("p:has-text(' to ')").first().innerText(), /Wed 21 Oct to Tue 17 Nov/, "plan now ends a week later (28 days)");
+  await page.getByRole("button", { name: "Undo" }).click();
+  assert.equal(await page.locator("b:has-text('Week 2 · again')").count(), 0, "undo removes the repeat");
+  await page.getByRole("button", { name: "Push back a day" }).click();
+  await page.locator("text=Today is a pushed-back day").waitFor();
+  assert.equal(await page.getByRole("button", { name: "Repeat week 2" }).count(), 1, "the gap belongs to the week it delays");
+  await page.getByRole("tab", { name: "Month" }).click();
+  assert.equal(await page.locator("[aria-label^='October 29, plan: Run']").count(), 1, "plan day 8 moved to the 29th on the calendar");
+  await page.getByRole("tab", { name: "Today" }).click();
+  await page.locator("text=Free day: you pushed the plan back").waitFor();
+  await page.getByRole("tab", { name: "Programs" }).click();
+  await page.getByRole("button", { name: "Start again today" }).click();
+  await page.locator("text=Day 1 of 21.").waitFor();
+  await page.getByRole("button", { name: "Undo" }).click();
+  await page.locator("text=Today is a pushed-back day").waitFor();
+  await page.close();
+});
+
+test("charts: tooltip on keyboard focus, numbers table, empty state", async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await open(page, "/?demo=1#month/2026-10");
+  const fig = page.locator("figure:has-text('Minutes per week')");
+  await fig.locator("rect[aria-label^='Week of Mon 5 Oct']").focus();
+  await fig.locator("div[aria-hidden=true]:has-text('154 minutes')").waitFor();
+  await fig.locator("summary:has-text('Show numbers')").click();
+  assert.equal(await fig.locator("tbody tr").count(), 5);
+  // September's last week (28 Sep - 4 Oct) has October minutes, by design; August has none.
+  await page.getByRole("button", { name: "Previous month" }).click(); await page.getByRole("button", { name: "Previous month" }).click();
+  await page.locator("figure:has-text('No minutes logged in these weeks yet')").waitFor();
+  await open(page, "/?demo=1#programs/pf");
+  const ctl = page.locator("figure:has-text('Control over time')");
+  assert.equal(await ctl.locator("circle").count(), 12, "last 12 rated sessions");
+  await ctl.locator("rect[role=img]").last().focus();
+  await ctl.locator("div[aria-hidden=true]:has-text('/ 5')").waitFor();
+  await page.close();
+});
+
+test("Month shortcuts: arrows and T change month, but not while typing or inside the calendar", async () => {
+  const page = await browser.newPage();
+  await open(page, "/?demo=1#month/2026-10");
+  await page.locator("h1").click();
+  await page.keyboard.press("ArrowRight"); await page.locator("h2:has-text('November 2026')").waitFor();
+  await page.keyboard.press("ArrowLeft"); await page.keyboard.press("ArrowLeft"); await page.locator("h2:has-text('September 2026')").waitFor();
+  await page.keyboard.press("t"); await page.locator("h2:has-text('October 2026')").waitFor();
+  await page.locator("[aria-label^='October 15,']").focus(); await page.keyboard.press("ArrowRight");
+  assert.equal(await page.locator("h2:has-text('October 2026')").count(), 1, "calendar arrows move days, not months");
+  await page.locator("summary:has-text('Month review')").click();
+  await page.getByLabel("Goal").focus(); await page.keyboard.press("ArrowLeft"); await page.keyboard.type("t");
+  assert.equal(await page.locator("h2:has-text('October 2026')").count(), 1, "typing is never a shortcut");
+  await page.close();
+});
+
+test("swipe on the calendar changes month; the streak line explains itself", async () => {
+  const ctx = await browser.newContext({ hasTouch: true, viewport: { width: 390, height: 844 } }); const page = await ctx.newPage();
+  await open(page, "/?demo=1#month/2026-10");
+  const swipe = (x0, x1) => page.locator("#calendar").evaluate((el, [a, b]) => {
+    const t = x => new Touch({ identifier: 1, target: el, clientX: x, clientY: 400 });
+    el.dispatchEvent(new TouchEvent("touchstart", { touches: [t(a)], changedTouches: [t(a)], bubbles: true }));
+    el.dispatchEvent(new TouchEvent("touchend", { touches: [], changedTouches: [t(b)], bubbles: true }));
+  }, [x0, x1]);
+  await swipe(300, 120); await page.locator("h2:has-text('November 2026')").waitFor();
+  await swipe(120, 300); await page.locator("h2:has-text('October 2026')").waitFor();
+  await swipe(200, 170); assert.equal(await page.locator("h2:has-text('October 2026')").count(), 1, "short drags are ignored");
+  await open(page, "/?demo=1#today");
+  await page.locator("text=Current streak: 13 days, since Sun 11 Oct.").waitFor(); // demo: 28th blank, rests neutral, 10th missed
+  await page.locator("text=Before that, Sat 10 Oct was missed.").waitFor();
+  await ctx.close();
+});
+
+// Wait until a service worker controls the page (first visit installs it; clients.claim() takes over).
+const controlled = page => page.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller !== null, null, { timeout: 15000 });
+
+test("installable: Chrome reports no installability errors; manifest and icons load", async () => {
+  const page = await browser.newPage();
+  await open(page, "/?demo=1");
+  await controlled(page);
+  const cdp = await page.context().newCDPSession(page);
+  const { installabilityErrors } = await cdp.send("Page.getInstallabilityErrors");
+  assert.deepEqual(installabilityErrors, []);
+  const manifest = await (await page.request.get(base + "/manifest.webmanifest")).json();
+  for (const i of manifest.icons) assert.equal((await page.request.get(base + "/" + i.src)).status(), 200, i.src);
+  await page.close();
+});
+
+test("offline: after one visit the app and its data load with no network", async () => {
+  const ctx = await browser.newContext(); const page = await ctx.newPage();
+  await open(page, "/?today=2026-10-28#month/2026-10");
+  await page.locator("[aria-label='October 15']").click();
+  await page.getByRole("button", { name: "Workout done", exact: true }).click();
+  await page.getByRole("button", { name: "Save day" }).click();
+  await controlled(page);
+  await ctx.setOffline(true);
+  await page.reload(); await page.waitForSelector("#panel h2");
+  assert.equal(await page.locator("[aria-label^='October 15, Workout done']").count(), 1, "app shell and saved data, offline");
+  await page.getByRole("tab", { name: "Programs" }).click(); await page.locator("text=21-day running start").waitFor();
+  await ctx.close();
+});
+
+test("update: a new version waits for Reload instead of reloading by itself", async () => {
+  const ctx = await browser.newContext(); const page = await ctx.newPage();
+  await open(page, "/?demo=1");
+  await controlled(page);
+  await page.evaluate(() => { window.__sameDocument = true; });
+  swSuffix = "\n// next release";
+  try {
+    await page.evaluate(() => navigator.serviceWorker.getRegistration().then(r => r.update()));
+    await page.locator("text=A new version of Dojo is ready.").waitFor({ timeout: 15000 });
+    await page.waitForTimeout(500);
+    assert.equal(await page.evaluate(() => window.__sameDocument), true, "no automatic reload");
+    await Promise.all([page.waitForEvent("load"), page.getByRole("button", { name: "Reload" }).click()]);
+    await page.waitForSelector("#panel h2");
+    assert.equal(await page.evaluate(() => window.__sameDocument), undefined, "reloaded onto the new version");
+    assert.equal(await page.locator("text=A new version of Dojo is ready.").count(), 0);
+  } finally { swSuffix = ""; await ctx.close(); }
+});
+
+test("reminder: banner after the chosen time when nothing is logged, once a day", async () => {
+  const ctx = await browser.newContext(); const page = await ctx.newPage();
+  await open(page, "/?today=2026-10-28&now=18:00");
+  await page.evaluate(() => localStorage.setItem("dojo.state", JSON.stringify({ version: 2, settings: { reminder: { on: true, time: "19:00" } } })));
+  await page.reload(); await page.waitForSelector("#panel h2");
+  await page.waitForTimeout(300);
+  assert.equal(await page.locator("text=Nothing logged yet today.").count(), 0, "not before 19:00");
+  await open(page, "/?today=2026-10-28&now=20:00#month/2026-10"); // a real navigation (the query changed); no extra reload, which would use up today's reminder
+  await page.locator("text=Nothing logged yet today.").waitFor();
+  await page.getByRole("button", { name: "Log today" }).click();
+  assert.match(page.url(), /#today$/);
+  await page.locator("[aria-labelledby=t-sets] button", { hasText: "3" }).click();
+  assert.equal(await page.locator("text=Nothing logged yet today.").count(), 0, "goes away once something is logged");
+  await page.evaluate(() => { const s = JSON.parse(localStorage.getItem("dojo.state")); delete s.days["2026-10-28"]; localStorage.setItem("dojo.state", JSON.stringify(s)); });
+  await page.reload(); await page.waitForSelector("#panel h2"); await page.waitForTimeout(300);
+  assert.equal(await page.locator("text=Nothing logged yet today.").count(), 0, "only once a day");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator("input[type=time]").waitFor();
+  await page.addScriptTag({ content: AXE() });
+  const r = await page.evaluate(() => axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] } }));
+  assert.deepEqual(r.violations.map(v => v.id), [], "Settings with the reminder on passes axe");
+  await ctx.close();
+});
+
+test("performance budget: first load under 350 KB", async () => {
+  const ctx = await browser.newContext(); const page = await ctx.newPage();
+  let bytes = 0; page.on("response", async r => { try { bytes += (await r.body()).length; } catch { /* redirects */ } });
+  await open(page, "/?demo=1"); await page.waitForLoadState("networkidle");
+  assert.ok(bytes <= 350 * 1024, `first load was ${(bytes / 1024).toFixed(0)} KB`);
+  console.log(`# first load ${(bytes / 1024).toFixed(0)} KB`);
   await ctx.close();
 });

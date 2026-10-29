@@ -1,6 +1,7 @@
 import React from "react";
 import { DS, TODAY } from "../env.js";
-import { MONTHS, MOTTOS, DEFAULT_MOTTO, STATES, iso, sameDay, longest, runIdx, runInfo, shiftMonth, daysInMonth, monthKey, pfHelpers } from "../logic.js";
+import { MONTHS, MOTTOS, DEFAULT_MOTTO, STATES, iso, sameDay, longest, runIdx, runInfo, shiftMonth, daysInMonth, monthKey, weeklyMinutes, fmtDate, pfHelpers } from "../logic.js";
+import { ColumnChart } from "./Charts.jsx";
 import { monthOf } from "../store.js";
 import { words } from "../words.js";
 import { useBreakpoint, autoGrid } from "../layout.js";
@@ -23,7 +24,7 @@ function dayLabel(w, monthName, d, e, run, practice, isTest, today) {
 
 // Props for one calendar cell; shared by the Month calendar and the Today view's week strip.
 export function dayCell(state, date, { compact, onOpenDay }) {
-  const k = iso(date), e = state.days[k] || {}, ri = runIdx(date, state.plan.start);
+  const k = iso(date), e = state.days[k] || {}, ri = runIdx(date, state.plan);
   const h = pfHelpers(state.pf, TODAY), isTest = !!h.testFor(k);
   const planned = !!state.pf.start && date >= h.startDate() && (isTest || h.isPracticeDay(date));
   const run = ri >= 0 ? { ...runInfo(ri, state.plan.recovery), ok: !!e.run } : null;
@@ -48,6 +49,26 @@ export function Sheet({ state, month: key, onMonth, onSetMonth, onOpenDay, revie
   const phone = useBreakpoint() === "phone";
   const w = words(state);
   const thisMonth = monthKey(TODAY);
+  // ← / → change month, T jumps to this month. Not while typing, inside the calendar (its arrows move between days),
+  // in tab lists, or with a dialog open.
+  const latest = React.useRef(); latest.current = { key, onMonth, thisMonth };
+  React.useEffect(() => {
+    const onKey = e => {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented) return;
+      const t = e.target; if (t.closest && t.closest("input,textarea,select,[contenteditable],[role=dialog],[role=tablist],#calendar,svg")) return;
+      if (document.querySelector("[role=dialog]")) return;
+      const { key: k, onMonth: go, thisMonth: now } = latest.current;
+      if (e.key === "ArrowLeft") { e.preventDefault(); go(shiftMonth(k, -1)); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); go(shiftMonth(k, 1)); }
+      else if (e.key === "t" || e.key === "T") go(now);
+    };
+    addEventListener("keydown", onKey); return () => removeEventListener("keydown", onKey);
+  }, []);
+  // Swipe left/right on the calendar changes month (touch screens).
+  const touch = React.useRef(null);
+  const onTouchStart = e => { const p = e.touches[0]; touch.current = { x: p.clientX, y: p.clientY }; };
+  const onTouchEnd = e => { const s0 = touch.current; touch.current = null; if (!s0) return; const p = e.changedTouches[0], dx = p.clientX - s0.x, dy = p.clientY - s0.y;
+    if (Math.abs(dx) >= 60 && Math.abs(dx) >= 2 * Math.abs(dy)) onMonth(shiftMonth(key, dx < 0 ? 1 : -1)); };
   const md = monthOf(state, key);
   const first = new Date(y, m - 1, 1), daysIn = daysInMonth(key), lead = (first.getDay() + 6) % 7;
   let trained = 0, totalMin = 0, setsFull = 0, pracN = 0; const seq = [];
@@ -68,28 +89,31 @@ export function Sheet({ state, month: key, onMonth, onSetMonth, onOpenDay, revie
   return <>
     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <NavButton dir="prev" label="Previous month" onClick={() => onMonth(shiftMonth(key, -1))} />
+        <NavButton dir="prev" label="Previous month" aria-keyshortcuts="ArrowLeft" onClick={() => onMonth(shiftMonth(key, -1))} />
         <h2 style={{ font: "700 var(--text-title)/1.2 var(--font-display)", letterSpacing: ".01em", margin: 0, whiteSpace: "nowrap" }}>{MONTHS[m - 1]} {y}</h2>
-        <NavButton dir="next" label="Next month" onClick={() => onMonth(shiftMonth(key, 1))} />
+        <NavButton dir="next" label="Next month" aria-keyshortcuts="ArrowRight" onClick={() => onMonth(shiftMonth(key, 1))} />
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
-        {key !== thisMonth && <Button variant="ghost" onClick={() => onMonth(thisMonth)} style={{ minHeight: 44 }}>This month</Button>}
+        {key !== thisMonth && <Button variant="ghost" aria-keyshortcuts="T" onClick={() => onMonth(thisMonth)} style={{ minHeight: 44 }}>This month</Button>}
         {MONTH_INPUT_OK && <Field as="month" aria-label="Pick any month" value={key} onChange={e => e.target.value && onMonth(e.target.value)} inputStyle={{ minHeight: 44, padding: "7px 10px" }} />}
       </div>
     </div>
     <Motto>{MOTTOS[key] || DEFAULT_MOTTO}</Motto>
     {/* One primary figure; the bar under it carries no second copy of the number. */}
-    <p style={{ margin: "0 0 2px", font: "700 var(--text-subhead)/1.2 var(--font-display)", letterSpacing: ".01em" }}>
+    <p style={{ margin: "0 0 4px", font: "800 var(--text-title)/1.1 var(--font-display)", letterSpacing: ".01em" }}>
       {target ? `${trained} of ${target} days trained` : `${trained} day${trained === 1 ? "" : "s"} trained`}
       {!target && <span style={{ font: "400 var(--text-small) var(--font-body)", color: "var(--ink-2)" }}> · set a target under Month review</span>}
     </p>
     <Lanes value={trained} max={target || daysIn} word="Day" showLabel={false} />
-    <div id="calendar" tabIndex={-1} onKeyDown={onCalendarKey} role="group" aria-label={`${MONTHS[m - 1]} ${y} calendar`} style={{ outline: "none", display: "grid", gridTemplateColumns: phone ? "repeat(7,minmax(0,1fr)) 40px" : "repeat(7,minmax(0,1fr)) 60px", gap: phone ? 4 : 6, marginTop: 10 }}><DowHeader labels={phone ? ["M", "T", "W", "T", "F", "S", "S"] : undefined} trailing={phone ? "Wk" : "Week"} />{rows}</div>
-    <Legend items={[{ status: "done", label: "Done" }, { status: "light", label: "Light" }, { status: "missed", label: "Missed" }, { status: "rest", label: "Rest" }, { status: null, label: "To do" }, { node: <span style={{ font: "800 var(--text-caption)/1 var(--font-display)", background: "var(--lane)", color: "var(--on-lane)", borderRadius: "var(--radius-pill)", padding: "2px 5px" }}>28</span>, label: "Today" }, { node: <Icon name="run" />, label: "Run plan" }, { node: <KegelDots sets={3} size={7} />, label: w.sets }, { node: glyph("◆"), label: w.practice }, { node: glyph("★"), label: w.test }, { node: glyph("◇ ☆"), label: "Planned" }]} />
+    <div id="calendar" tabIndex={-1} onKeyDown={onCalendarKey} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} role="group" aria-label={`${MONTHS[m - 1]} ${y} calendar`} style={{ outline: "none", display: "grid", gridTemplateColumns: phone ? "repeat(7,minmax(0,1fr)) 40px" : "repeat(7,minmax(0,1fr)) 60px", gap: phone ? 4 : 6, marginTop: 10 }}><DowHeader labels={phone ? ["M", "T", "W", "T", "F", "S", "S"] : undefined} trailing={phone ? "Wk" : "Week"} />{rows}</div>
+    <Legend items={[{ status: "done", label: "Done" }, { status: "light", label: "Light" }, { status: "rest", label: "Rest" }, { status: "missed", label: "Missed" }, { status: null, label: "To do" }, { node: <span style={{ font: "800 var(--text-caption)/1 var(--font-display)", background: "var(--lane)", color: "var(--on-lane)", borderRadius: "var(--radius-pill)", padding: "2px 5px" }}>28</span>, label: "Today" }, { node: <Icon name="run" />, label: "Run plan" }, { node: <KegelDots sets={3} size={7} />, label: w.sets }, { node: glyph("◆"), label: w.practice }, { node: glyph("★"), label: w.test }, { node: glyph("◇ ☆"), label: "Planned" }]} />
     <div style={{ ...autoGrid(150), margin: "14px 0" }}>
-      <Stat value={longest(seq)} label="Longest streak" /><Stat value={totalMin} label="Minutes" />
-      <Stat value={setsFull} label={`Days with 3 ${w.sets.toLowerCase().replace("kegel", "Kegel")}`} /><Stat value={pracN} label={`${w.practice} sessions`} />
+      <Stat compact value={longest(seq)} label="Longest streak" /><Stat compact value={totalMin} label="Minutes" />
+      <Stat compact value={setsFull} label={`Days with 3 ${w.sets.toLowerCase().replace("kegel", "Kegel")}`} /><Stat compact value={pracN} label={`${w.practice} sessions`} />
     </div>
+    <ColumnChart title="Minutes per week" desc={`Training minutes in each Monday-to-Sunday week of ${MONTHS[m - 1]}.`} unit="Minutes" empty="No minutes logged in these weeks yet."
+      data={weeklyMinutes(state.days, key).map(d => ({ key: d.key, label: fmtDate(d.date).slice(4), long: `Week of ${fmtDate(d.date)}`, value: d.value }))} />
+    <p className="dj-hover-only" style={{ margin: "0 0 12px", color: "var(--ink-2)", fontSize: "var(--text-caption)" }}>Shortcuts: ← → change month, T this month.</p>
     <Details summary={`Month review${md.goal ? ": " + md.goal : ""}`} open={reviewOpen} onToggle={onReviewToggle}>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 110px", gap: 10, marginBottom: 14 }}>
         <Field label="Goal" value={md.goal} onChange={e => onSetMonth({ goal: e.target.value })} placeholder="What are you working toward this month?" />

@@ -1012,6 +1012,7 @@ try { (() => {
 function Stat({
   value,
   label,
+  compact = false,
   children,
   style
 }) {
@@ -1025,7 +1026,7 @@ function Stat({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      font: "800 var(--text-title)/1 var(--font-display)",
+      font: "800 " + (compact ? "var(--text-subhead)" : "var(--text-title)") + "/1 var(--font-display)",
       letterSpacing: ".01em",
       color: "var(--ink)"
     }
@@ -1344,6 +1345,7 @@ function Dialog({
 /** Segmented-control track for Tab; ←/→/Home/End move selection (tabs activate on focus). */
 function TabList({
   label,
+  size,
   children,
   style
 }) {
@@ -1366,8 +1368,10 @@ function TabList({
       gap: 2,
       padding: 2,
       borderRadius: "var(--radius-pill)",
-      background: "var(--tint-ink-strong)",
-      border: "1px solid var(--line)",
+      // Secondary switches (size "sm") drop the track so they read as subordinate to the main view switch.
+      background: size === "sm" ? "transparent" : "var(--tint-ink-strong)",
+      border: size === "sm" ? "none" : "1px solid var(--line)",
+      fontSize: size === "sm" ? "var(--text-small)" : undefined,
       ...style
     }
   }, children);
