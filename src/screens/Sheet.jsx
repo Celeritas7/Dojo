@@ -1,11 +1,11 @@
 import React from "react";
-import { DS, TODAY } from "../env.js";
+import { TODAY } from "../env.js";
 import { MONTHS, MOTTOS, DEFAULT_MOTTO, STATES, iso, sameDay, longest, runIdx, runInfo, shiftMonth, daysInMonth, monthKey, weeklyMinutes, fmtDate, pfHelpers } from "../logic.js";
 import { ColumnChart } from "./Charts.jsx";
 import { monthOf } from "../store.js";
 import { words } from "../words.js";
 import { useBreakpoint, autoGrid } from "../layout.js";
-const { NavButton, Motto, Lanes, DowHeader, SheetCell, WeekTally, Legend, Stat, Field, Counter, Icon, KegelDots, Button, Details } = DS;
+import { NavButton, Motto, Lanes, DowHeader, SheetCell, WeekTally, Legend, Stat, Field, Counter, Icon, KegelDots, Button, Details } from "../components.js";
 
 // Firefox and Safari on desktop render <input type="month"> as a plain text box; only offer it where it is a real picker.
 const MONTH_INPUT_OK = (() => { try { const i = document.createElement("input"); i.setAttribute("type", "month"); return i.type === "month"; } catch { return false; } })();

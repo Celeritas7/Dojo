@@ -1,8 +1,8 @@
 import React from "react";
-import { DS, TODAY, DEMO } from "../env.js";
+import { TODAY, DEMO } from "../env.js";
 import { exportJSON, importJSON, backupFilename } from "../store.js";
 import { getTheme, applyTheme } from "../theme.js";
-const { Dialog, Pill, Toggle, Button } = DS;
+import { Dialog, Pill, Toggle, Button } from "../components.js";
 
 const h4 = { font: "700 var(--text-body)/1.2 var(--font-display)", letterSpacing: ".01em", margin: "14px 0 6px" };
 const note = { color: "var(--ink-2)", fontSize: "var(--text-small)", margin: "6px 0 0" };

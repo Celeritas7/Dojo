@@ -1,29 +1,12 @@
-/* @ds-bundle: {"format":4,"namespace":"DojoDesignSystem_c9e716","note":"ui_kits/dojo/* screen copies removed; the live screens are in src/screens","components":[{"name":"ICONS","sourcePath":"assets/icons/icons.js"},{"name":"CalendarCell","sourcePath":"components/calendar/CalendarCell.jsx"},{"name":"DayCard","sourcePath":"components/calendar/DayCard.jsx"},{"name":"DowHeader","sourcePath":"components/calendar/DowHeader.jsx"},{"name":"HabitDot","sourcePath":"components/calendar/HabitDot.jsx"},{"name":"KegelDots","sourcePath":"components/calendar/KegelDots.jsx"},{"name":"RunChip","sourcePath":"components/calendar/RunChip.jsx"},{"name":"SheetCell","sourcePath":"components/calendar/SheetCell.jsx"},{"name":"WeekTally","sourcePath":"components/calendar/WeekTally.jsx"},{"name":"Button","sourcePath":"components/controls/Button.jsx"},{"name":"Counter","sourcePath":"components/controls/Counter.jsx"},{"name":"Field","sourcePath":"components/controls/Field.jsx"},{"name":"Icon","sourcePath":"components/controls/Icon.jsx"},{"name":"NavButton","sourcePath":"components/controls/NavButton.jsx"},{"name":"Pill","sourcePath":"components/controls/Pill.jsx"},{"name":"Tab","sourcePath":"components/controls/Tab.jsx"},{"name":"Toggle","sourcePath":"components/controls/Toggle.jsx"},{"name":"Lanes","sourcePath":"components/display/Lanes.jsx"},{"name":"Legend","sourcePath":"components/display/Legend.jsx"},{"name":"Motto","sourcePath":"components/display/Motto.jsx"},{"name":"Rule","sourcePath":"components/display/Rule.jsx"},{"name":"Stage","sourcePath":"components/display/Stage.jsx"},{"name":"Stat","sourcePath":"components/display/Stat.jsx"},{"name":"Strip","sourcePath":"components/display/Strip.jsx"},{"name":"Tip","sourcePath":"components/display/Tip.jsx"},{"name":"CheckinCard","sourcePath":"components/overlays/CheckinCard.jsx"},{"name":"Question","sourcePath":"components/overlays/CheckinCard.jsx"},{"name":"Details","sourcePath":"components/overlays/Details.jsx"},{"name":"Dialog","sourcePath":"components/overlays/Dialog.jsx"},{"name":"DialogSection","sourcePath":"components/overlays/Dialog.jsx"},{"name":"StateGrid","sourcePath":"components/overlays/StateGrid.jsx"}],"sourceHashes":{"assets/icons/icons.js":"ac046ffdd62d","components/calendar/CalendarCell.jsx":"15e32c87ac05","components/calendar/DayCard.jsx":"a6fbe0e0bcaa","components/calendar/DowHeader.jsx":"2061a58fca38","components/calendar/HabitDot.jsx":"5fc366de7456","components/calendar/KegelDots.jsx":"43132de2f8f6","components/calendar/RunChip.jsx":"04fc6bdf18bd","components/calendar/SheetCell.jsx":"c4b55b10abb4","components/calendar/WeekTally.jsx":"9a02e385707b","components/controls/Button.jsx":"4d147296c3e1","components/controls/Counter.jsx":"31a22bb947c2","components/controls/Field.jsx":"d70cf1067dfc","components/controls/Icon.jsx":"e443cfe913a7","components/controls/NavButton.jsx":"52e6e9f64bbc","components/controls/Pill.jsx":"155a98acf107","components/controls/Tab.jsx":"c3444a14b989","components/controls/Toggle.jsx":"3a4283b1537b","components/display/Lanes.jsx":"a812098fcb12","components/display/Legend.jsx":"65c747082aad","components/display/Motto.jsx":"1403b407ccc2","components/display/Rule.jsx":"e50c35bf0bd0","components/display/Stage.jsx":"d31ca20c4e8f","components/display/Stat.jsx":"81b1cfde4b1e","components/display/Strip.jsx":"e0e6ccdb5d78","components/display/Tip.jsx":"66165f96ae81","components/overlays/CheckinCard.jsx":"75ae13ebc19f","components/overlays/Details.jsx":"facac6b2e81e","components/overlays/Dialog.jsx":"783f2ff6518f","components/overlays/StateGrid.jsx":"65a289bc21db","ui_kits/dojo/App.jsx":"d40e57457a78","ui_kits/dojo/Checkin.jsx":"aa367f26600c","ui_kits/dojo/DayEditor.jsx":"a35fa34dda53","ui_kits/dojo/Header.jsx":"656e5cb8aaae","ui_kits/dojo/Programs.jsx":"e13a4dae17c1","ui_kits/dojo/Sheet.jsx":"6b78d9fa0e07","ui_kits/dojo/data.js":"61187e861d35"},"inlinedExternals":[],"unexposedExports":[]} */
-
-(() => {
-
-const __ds_ns = (window.DojoDesignSystem_c9e716 = window.DojoDesignSystem_c9e716 || {});
+// Dojo component library. Each block below was one source file in the original design-system bundle; blocks are
+// kept separate (block-scoped helpers such as KIND and _extends repeat) and register themselves on __ds_scope, which
+// is exported at the bottom. Screens import components from here; nothing is attached to window.
+import React from "react";
 
 const __ds_scope = {};
 
-(__ds_ns.__errors = __ds_ns.__errors || []);
-
-// assets/icons/icons.js
-try { (() => {
-// Dojo glyph set, copied verbatim from Dojo/index.html ICON map. Inline via dangerouslySetInnerHTML or <img src>.
-const ICONS = {
-  "run": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\"><path d=\"M2 11c3 0 4-1 6-1s3 2 6 2v1H2z\" fill=\"currentColor\"/><path d=\"M4 10l1-4h3l1 3\" stroke=\"currentColor\" stroke-width=\"1.5\" fill=\"none\"/></svg>",
-  "walk": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\"><ellipse cx=\"5\" cy=\"10\" rx=\"2\" ry=\"3.2\" fill=\"currentColor\"/><ellipse cx=\"11\" cy=\"6\" rx=\"2\" ry=\"3.2\" fill=\"currentColor\"/></svg>",
-  "rest": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\"><path d=\"M10 2a6 6 0 1 0 4 10A5 5 0 0 1 10 2z\" fill=\"currentColor\"/></svg>",
-  "finish": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\"><path d=\"M3 1v14\" stroke=\"currentColor\" stroke-width=\"1.6\"/><path d=\"M4 2h9l-2 3 2 3H4z\" fill=\"currentColor\"/></svg>",
-  "check": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 14 14\"><path d=\"M2 7l3 3 7-7\" stroke=\"currentColor\" stroke-width=\"2.2\" fill=\"none\"/></svg>"
-};
-window.DojoIcons = ICONS;
-Object.assign(__ds_scope, { ICONS });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "assets/icons/icons.js", error: String((e && e.message) || e) }); }
-
 // components/calendar/DowHeader.jsx
-try { (() => {
+{
 /** .dow — condensed 14px muted weekday header; pass an extra trailing label (e.g. "Week") */
 function DowHeader({
   labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -44,10 +27,10 @@ function DowHeader({
   }, trailing));
 }
 Object.assign(__ds_scope, { DowHeader });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/calendar/DowHeader.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/calendar/KegelDots.jsx
-try { (() => {
+{
 /** .kg — three 8px dots, filled yellow per set */
 function KegelDots({
   sets = 0,
@@ -73,10 +56,10 @@ function KegelDots({
   })));
 }
 Object.assign(__ds_scope, { KegelDots });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/calendar/KegelDots.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/calendar/WeekTally.jsx
-try { (() => {
+{
 /** .wk — week column summary: "Wk 3" over "5/7" on 6% ink tint */
 function WeekTally({
   week,
@@ -110,10 +93,10 @@ function WeekTally({
   }, done, "/", of));
 }
 Object.assign(__ds_scope, { WeekTally });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/calendar/WeekTally.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/controls/Button.jsx
-try { (() => {
+{
 function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
 /** .btn / .btn.ghost from Dojo */
 function Button({
@@ -141,10 +124,10 @@ function Button({
   }), children);
 }
 Object.assign(__ds_scope, { Button });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/controls/Button.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/controls/Counter.jsx
-try { (() => {
+{
 const b = {
   font: "inherit",
   cursor: "pointer",
@@ -194,10 +177,10 @@ function Counter({
   }, "+"));
 }
 Object.assign(__ds_scope, { Counter });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/controls/Counter.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/controls/Field.jsx
-try { (() => {
+{
 function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
 const inputStyle = {
   font: "inherit",
@@ -255,10 +238,10 @@ function Field({
   }, label, control);
 }
 Object.assign(__ds_scope, { Field });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/controls/Field.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/controls/Icon.jsx
-try { (() => {
+{
 const ICONS = {
   run: '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 11c3 0 4-1 6-1s3 2 6 2v1H2z" fill="currentColor"/><path d="M4 10l1-4h3l1 3" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>',
   walk: '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="5" cy="10" rx="2" ry="3.2" fill="currentColor"/><ellipse cx="11" cy="6" rx="2" ry="3.2" fill="currentColor"/></svg>',
@@ -286,10 +269,10 @@ function Icon({
   });
 }
 Object.assign(__ds_scope, { Icon });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/controls/Icon.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/calendar/DayCard.jsx
-try { (() => {
+{
 const KIND = {
   run: "var(--run)",
   walk: "var(--walk-ink)",
@@ -407,10 +390,10 @@ function DayCard({
   })));
 }
 Object.assign(__ds_scope, { DayCard });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/calendar/DayCard.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/calendar/HabitDot.jsx
-try { (() => {
+{
 /** Status circle. status: done | light | missed | rest | null (dashed empty). size 28 (month cell) / 18 (sheet) / 12 (legend) */
 function HabitDot({
   status = null,
@@ -468,73 +451,10 @@ function HabitDot({
   }, sym);
 }
 Object.assign(__ds_scope, { HabitDot });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/calendar/HabitDot.jsx", error: String((e && e.message) || e) }); }
-
-// components/calendar/CalendarCell.jsx
-try { (() => {
-/** .cell — (status/Kegel dots are hidden on past days with nothing logged unless `pending`) simple month-view day: number, big status dot, minutes */
-function CalendarCell({
-  day,
-  status = null,
-  mins,
-  today = false,
-  empty = false,
-  onClick,
-  ariaLabel,
-  style
-}) {
-  if (empty) return /*#__PURE__*/React.createElement("div", {
-    "aria-hidden": "true",
-    style: {
-      background: "transparent",
-      border: "1px dashed var(--line)",
-      borderRadius: "var(--radius-sm)",
-      minHeight: 82,
-      ...style
-    }
-  });
-  return /*#__PURE__*/React.createElement("button", {
-    type: "button",
-    onClick: onClick,
-    "aria-label": ariaLabel,
-    style: {
-      font: "inherit",
-      cursor: "pointer",
-      background: "var(--card)",
-      border: today ? "2px solid var(--lane)" : "1.5px solid var(--line)",
-      borderRadius: "var(--radius-sm)",
-      minHeight: 82,
-      padding: 6,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: 4,
-      textAlign: "center",
-      color: "var(--ink)",
-      ...style
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      alignSelf: "flex-start",
-      font: "700 var(--text-body)/1 var(--font-display)",
-      letterSpacing: ".01em"
-    }
-  }, day), /*#__PURE__*/React.createElement(__ds_scope.HabitDot, {
-    status: status,
-    size: 28
-  }), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: "var(--text-caption)",
-      color: "var(--ink-2)",
-      lineHeight: 1.1
-    }
-  }, mins ? mins + " min" : "__ min"));
 }
-Object.assign(__ds_scope, { CalendarCell });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/calendar/CalendarCell.jsx", error: String((e && e.message) || e) }); }
 
 // components/calendar/RunChip.jsx
-try { (() => {
+{
 const KIND = {
   run: "var(--run)",
   walk: "var(--walk-ink)",
@@ -570,10 +490,10 @@ function RunChip({
   }), !hideLabel && /*#__PURE__*/React.createElement("span", null, label || kind[0].toUpperCase() + kind.slice(1)));
 }
 Object.assign(__ds_scope, { RunChip });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/calendar/RunChip.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/calendar/SheetCell.jsx
-try { (() => {
+{
 /** .sc — one day of the combined monthly sheet. practice: 'done' | 'planned' | null; test marks ★ instead of ◆ */
 function SheetCell({
   day,
@@ -664,10 +584,10 @@ function SheetCell({
   }, practice === "planned" ? test ? "☆" : "◇" : test ? "★" : "◆")));
 }
 Object.assign(__ds_scope, { SheetCell });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/calendar/SheetCell.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/controls/NavButton.jsx
-try { (() => {
+{
 function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
 /** .nav — 40px round month stepper */
 function NavButton({
@@ -697,10 +617,10 @@ function NavButton({
   }), dir === "prev" ? "‹" : "›");
 }
 Object.assign(__ds_scope, { NavButton });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/controls/NavButton.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/controls/Pill.jsx
-try { (() => {
+{
 function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
 /** .pill toggle — aria-pressed flips to ink/paper */
 function Pill({
@@ -730,10 +650,10 @@ function Pill({
   }), children);
 }
 Object.assign(__ds_scope, { Pill });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/controls/Pill.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/controls/Tab.jsx
-try { (() => {
+{
 function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
 /** .tab — same pill shape as Pill but 8px 16px padding, card background */
 function Tab({
@@ -766,10 +686,10 @@ function Tab({
   }), children);
 }
 Object.assign(__ds_scope, { Tab });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/controls/Tab.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/controls/Toggle.jsx
-try { (() => {
+{
 /** .toggle — labelled checkbox in a small card */
 function Toggle({
   checked = false,
@@ -804,10 +724,10 @@ function Toggle({
   }), children);
 }
 Object.assign(__ds_scope, { Toggle });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/controls/Toggle.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/display/Lanes.jsx
-try { (() => {
+{
 /** .lanes — running-track progress bar with tick marks and a runner pill */
 function Lanes({
   value = 0,
@@ -880,10 +800,10 @@ function Lanes({
   }, value, " / ", max));
 }
 Object.assign(__ds_scope, { Lanes });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/display/Lanes.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/display/Legend.jsx
-try { (() => {
+{
 /** .legend2 — inline swatch + label row. items: [{status:'done'|'light'|'missed'|'rest'} | {node}, label] */
 function Legend({
   items = [],
@@ -914,10 +834,10 @@ function Legend({
   }), it.label)));
 }
 Object.assign(__ds_scope, { Legend });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/display/Legend.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/display/Motto.jsx
-try { (() => {
+{
 /** .motto — italic 17px monthly line */
 function Motto({
   children,
@@ -933,10 +853,10 @@ function Motto({
   }, children);
 }
 Object.assign(__ds_scope, { Motto });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/display/Motto.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/display/Rule.jsx
-try { (() => {
+{
 /** .rule — 3px lane left border, condensed 18px title, 14px muted body */
 function Rule({
   title,
@@ -966,10 +886,10 @@ function Rule({
   }, children));
 }
 Object.assign(__ds_scope, { Rule });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/display/Rule.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/display/Stage.jsx
-try { (() => {
+{
 /** .stage — program stage card; now=true gets done tint + done border */
 function Stage({
   title,
@@ -1004,10 +924,10 @@ function Stage({
   }, c)));
 }
 Object.assign(__ds_scope, { Stage });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/display/Stage.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/display/Stat.jsx
-try { (() => {
+{
 /** .stat — big condensed number over a muted label */
 function Stat({
   value,
@@ -1038,10 +958,10 @@ function Stat({
   }, label), children);
 }
 Object.assign(__ds_scope, { Stat });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/display/Stat.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/display/Strip.jsx
-try { (() => {
+{
 /** .strip — 28-day heatmap. days: [{n, sets:0-3, practice:boolean, title}] */
 function Strip({
   days = [],
@@ -1078,10 +998,10 @@ function Strip({
   }, d.n)));
 }
 Object.assign(__ds_scope, { Strip });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/display/Strip.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/display/Tip.jsx
-try { (() => {
+{
 /** .tip — one-line muted note with lane left border */
 function Tip({
   children,
@@ -1100,88 +1020,10 @@ function Tip({
   }, children);
 }
 Object.assign(__ds_scope, { Tip });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/display/Tip.jsx", error: String((e && e.message) || e) }); }
-
-// components/overlays/CheckinCard.jsx
-try { (() => {
-/** .checkin — lane-bordered card. collapsed=true renders the one-line summary with an Edit button */
-function CheckinCard({
-  title = "Today's check-in",
-  collapsed = false,
-  summary,
-  onEdit,
-  children,
-  style
-}) {
-  const box = {
-    background: "var(--card)",
-    border: "1.5px solid var(--lane)",
-    borderRadius: "var(--radius-lg)",
-    padding: "14px 16px",
-    margin: "0 0 18px",
-    ...style
-  };
-  const h = {
-    font: "700 var(--text-heading)/1.2 var(--font-display)",
-    letterSpacing: ".01em",
-    margin: "0 0 2px",
-    color: "var(--ink)"
-  };
-  if (collapsed) return /*#__PURE__*/React.createElement("div", {
-    style: box
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 18,
-      flexWrap: "wrap",
-      justifyContent: "space-between",
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
-    style: h
-  }, title), /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: "var(--ink-2)",
-      fontSize: "var(--text-small)",
-      marginTop: 8
-    }
-  }, summary)), /*#__PURE__*/React.createElement(__ds_scope.Button, {
-    variant: "ghost",
-    onClick: onEdit
-  }, "Edit")));
-  return /*#__PURE__*/React.createElement("div", {
-    style: box
-  }, /*#__PURE__*/React.createElement("h2", {
-    style: h
-  }, title), children);
 }
-/** .q — 600-weight question line inside the check-in */
-function Question({
-  children,
-  hint,
-  id,
-  style
-}) {
-  return /*#__PURE__*/React.createElement("p", {
-    id: id,
-    style: {
-      margin: "10px 0 6px",
-      fontWeight: 600,
-      color: "var(--ink)",
-      ...style
-    }
-  }, children, hint && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 400,
-      color: "var(--ink-2)"
-    }
-  }, " (", hint, ")"));
-}
-Object.assign(__ds_scope, { CheckinCard, Question });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/overlays/CheckinCard.jsx", error: String((e && e.message) || e) }); }
 
 // components/overlays/Details.jsx
-try { (() => {
+{
 /** details.more — collapsible card with a condensed 20px summary */
 function Details({
   summary,
@@ -1214,10 +1056,10 @@ function Details({
   }, summary), children);
 }
 Object.assign(__ds_scope, { Details });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/overlays/Details.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/overlays/Dialog.jsx
-try { (() => {
+{
 /** Day-editor dialog shell: 18px radius card, deep shadow, dim backdrop; footer = Clear day / Save day */
 function Dialog({
   open = false,
@@ -1399,10 +1241,10 @@ function DialogSection({
   }, title), children);
 }
 Object.assign(__ds_scope, { Dialog, DialogSection, TabList });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/overlays/Dialog.jsx", error: String((e && e.message) || e) }); }
+}
 
 // components/overlays/StateGrid.jsx
-try { (() => {
+{
 /** .states — 2-column grid of pressable state buttons. options: [{value,label}] */
 function StateGrid({
   options = [],
@@ -1451,70 +1293,6 @@ function StateGrid({
   }));
 }
 Object.assign(__ds_scope, { StateGrid });
-})(); } catch (e) { __ds_ns.__errors.push({ path: "components/overlays/StateGrid.jsx", error: String((e && e.message) || e) }); }
+}
 
-__ds_ns.ICONS = __ds_scope.ICONS;
-
-__ds_ns.CalendarCell = __ds_scope.CalendarCell;
-
-__ds_ns.DayCard = __ds_scope.DayCard;
-
-__ds_ns.DowHeader = __ds_scope.DowHeader;
-
-__ds_ns.HabitDot = __ds_scope.HabitDot;
-
-__ds_ns.KegelDots = __ds_scope.KegelDots;
-
-__ds_ns.RunChip = __ds_scope.RunChip;
-
-__ds_ns.SheetCell = __ds_scope.SheetCell;
-
-__ds_ns.WeekTally = __ds_scope.WeekTally;
-
-__ds_ns.Button = __ds_scope.Button;
-
-__ds_ns.Counter = __ds_scope.Counter;
-
-__ds_ns.Field = __ds_scope.Field;
-
-__ds_ns.Icon = __ds_scope.Icon;
-
-__ds_ns.NavButton = __ds_scope.NavButton;
-
-__ds_ns.Pill = __ds_scope.Pill;
-
-__ds_ns.Tab = __ds_scope.Tab;
-
-__ds_ns.Toggle = __ds_scope.Toggle;
-
-__ds_ns.Lanes = __ds_scope.Lanes;
-
-__ds_ns.Legend = __ds_scope.Legend;
-
-__ds_ns.Motto = __ds_scope.Motto;
-
-__ds_ns.Rule = __ds_scope.Rule;
-
-__ds_ns.Stage = __ds_scope.Stage;
-
-__ds_ns.Stat = __ds_scope.Stat;
-
-__ds_ns.Strip = __ds_scope.Strip;
-
-__ds_ns.Tip = __ds_scope.Tip;
-
-__ds_ns.CheckinCard = __ds_scope.CheckinCard;
-
-__ds_ns.Question = __ds_scope.Question;
-
-__ds_ns.Details = __ds_scope.Details;
-
-__ds_ns.Dialog = __ds_scope.Dialog;
-
-__ds_ns.DialogSection = __ds_scope.DialogSection;
-
-__ds_ns.StateGrid = __ds_scope.StateGrid;
-
-__ds_ns.TabList = __ds_scope.TabList;
-
-})();
+export const { DayCard, DowHeader, HabitDot, KegelDots, RunChip, SheetCell, WeekTally, Button, Counter, Field, Icon, NavButton, Pill, Tab, Toggle, Lanes, Legend, Motto, Rule, Stage, Stat, Strip, Tip, Details, Dialog, DialogSection, StateGrid, TabList } = __ds_scope;

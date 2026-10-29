@@ -1,5 +1,4 @@
-import { DS } from "../env.js";
-const { Button } = DS;
+import { Button } from "../components.js";
 
 // Status line for saves, with an optional action (Undo). Always rendered so the live region exists before the first message.
 // While the pointer or keyboard focus is on the toast it stays put (WCAG 2.2.1); it resumes its timer when they leave.

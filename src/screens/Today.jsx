@@ -1,10 +1,10 @@
 import React from "react";
-import { DS, TODAY } from "../env.js";
+import { TODAY } from "../env.js";
 import { MOTTOS, DEFAULT_MOTTO, STATES, STAGES, PLAN_DAYS, iso, addDays, fmtDate, parseISO, monthKey, runIdx, runInfo, planLine, planPos, planSeq, isRepeat, currentStreak, pfHelpers } from "../logic.js";
 import { words } from "../words.js";
 import { useBreakpoint } from "../layout.js";
 import { dayCell, onCalendarKey } from "./Sheet.jsx";
-const { Motto, StateGrid, Field, Pill, Button, SheetCell, DowHeader, HabitDot } = DS;
+import { Motto, StateGrid, Field, Pill, Button, SheetCell, DowHeader, HabitDot } from "../components.js";
 
 const K = iso(TODAY);
 const LONG_DATE = TODAY.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });

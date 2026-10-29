@@ -1,10 +1,10 @@
 import React from "react";
-import { DS, TODAY } from "../env.js";
+import { TODAY } from "../env.js";
 import { words } from "../words.js";
 import { useBreakpoint, autoGrid } from "../layout.js";
 import { PLAN, PLAN_DAYS, PLAN_RUNS, WEEKS, STAGES, DAYNAMES, RULES, iso, fmtDate, sameDay, longest, addDays, runInfo, planDone, planSeq, planPos, planSlots, planWeeks, currentWeekGroup, isRepeat, runIdx, controlSeries, pfHelpers } from "../logic.js";
 import { LineChart } from "./Charts.jsx";
-const { Toggle, Rule, Field, Pill, Stage, Stat, Strip, Tip, Lanes, DayCard, Tab, TabList, Button } = DS;
+import { Toggle, Rule, Field, Pill, Stage, Stat, Strip, Tip, Lanes, DayCard, Tab, TabList, Button } from "../components.js";
 
 const rulesGrid = autoGrid(200);
 const progGrid = { ...autoGrid(200, 8), margin: "12px 0 18px" };
