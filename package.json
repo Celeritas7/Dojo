@@ -10,7 +10,10 @@
     "serve": "python3 -m http.server 8000",
     "test": "npm run test:unit && npm run test:smoke",
     "test:unit": "node --test \"test/unit/*.test.js\"",
-    "test:smoke": "node --test \"test/smoke/*.test.js\""
+    "test:smoke": "node --test \"test/smoke/*.test.js\"",
+    "check:budget": "node scripts/check-budget.js",
+    "icons": "node scripts/make-icons.js",
+    "verify": "npm run build && git diff --exit-code -- dist/app.js sw.js && npm run check:budget && npm test"
   },
   "dependencies": {
     "react": "18.3.1",

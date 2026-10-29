@@ -89,8 +89,9 @@ test("updateDay merges without starting the program; settings round-trip and def
   let s = updateDay(emptyState(), "2026-10-28", { s: "done", m: 34 });
   assert.deepEqual(s.days["2026-10-28"], { s: "done", m: 34 }); assert.equal(s.pf.start, null);
   s = setSettings(s, { discreet: true });
-  assert.deepEqual(importJSON(exportJSON(s)).settings, { discreet: true });
-  assert.deepEqual(validate({ version: 2 }).settings, { discreet: false }, "older saves without settings still load");
+  assert.deepEqual(importJSON(exportJSON(s)).settings, { discreet: true, reminder: { on: false, time: "19:00" } });
+  assert.deepEqual(validate({ version: 2 }).settings, { discreet: false, reminder: { on: false, time: "19:00" } }, "older saves without settings still load");
+  assert.deepEqual(validate({ version: 2, settings: { reminder: { on: true, time: "25:99" } } }).settings.reminder, { on: true, time: "19:00" }, "bad times fall back");
 });
 
 import { repeatWeek, pushBack, restartPlan } from "../../src/reducers.js";

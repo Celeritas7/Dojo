@@ -9,15 +9,18 @@ import { chromium } from "playwright";
 
 const ROOT = new URL("../../", import.meta.url).pathname;
 const SHOTS = join(ROOT, "test/screenshots");
-const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".woff2": "font/woff2", ".json": "application/json", ".map": "application/json" };
+const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".woff2": "font/woff2", ".json": "application/json", ".map": "application/json", ".webmanifest": "application/manifest+json", ".png": "image/png", ".svg": "image/svg+xml" };
 let server, browser, base;
+let swSuffix = ""; // appended to sw.js to simulate a new release in the update test
 
 before(async () => {
   assert.ok(existsSync(join(ROOT, "dist/app.js")), "dist/app.js missing: run `npm run build` first");
   server = http.createServer((req, res) => {
     const p = normalize(decodeURIComponent(req.url.split("?")[0])).replace(/^\/+/, "") || "index.html";
     const f = join(ROOT, p); if (!f.startsWith(ROOT) || !existsSync(f) || statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
-    res.writeHead(200, { "content-type": TYPES[extname(f)] || "application/octet-stream" }); createReadStream(f).pipe(res);
+    res.writeHead(200, { "content-type": TYPES[extname(f)] || "application/octet-stream", "cache-control": "no-cache" });
+    if (p === "sw.js" && swSuffix) return res.end(readFileSync(f, "utf8") + swSuffix);
+    createReadStream(f).pipe(res);
   });
   await new Promise(r => server.listen(0, "127.0.0.1", r));
   base = `http://127.0.0.1:${server.address().port}`;
@@ -362,5 +365,85 @@ test("swipe on the calendar changes month; the streak line explains itself", asy
   await open(page, "/?demo=1#today");
   await page.locator("text=Current streak: 13 days, since Sun 11 Oct.").waitFor(); // demo: 28th blank, rests neutral, 10th missed
   await page.locator("text=Before that, Sat 10 Oct was missed.").waitFor();
+  await ctx.close();
+});
+
+// Wait until a service worker controls the page (first visit installs it; clients.claim() takes over).
+const controlled = page => page.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller !== null, null, { timeout: 15000 });
+
+test("installable: Chrome reports no installability errors; manifest and icons load", async () => {
+  const page = await browser.newPage();
+  await open(page, "/?demo=1");
+  await controlled(page);
+  const cdp = await page.context().newCDPSession(page);
+  const { installabilityErrors } = await cdp.send("Page.getInstallabilityErrors");
+  assert.deepEqual(installabilityErrors, []);
+  const manifest = await (await page.request.get(base + "/manifest.webmanifest")).json();
+  for (const i of manifest.icons) assert.equal((await page.request.get(base + "/" + i.src)).status(), 200, i.src);
+  await page.close();
+});
+
+test("offline: after one visit the app and its data load with no network", async () => {
+  const ctx = await browser.newContext(); const page = await ctx.newPage();
+  await open(page, "/?today=2026-10-28#month/2026-10");
+  await page.locator("[aria-label='October 15']").click();
+  await page.getByRole("button", { name: "Workout done", exact: true }).click();
+  await page.getByRole("button", { name: "Save day" }).click();
+  await controlled(page);
+  await ctx.setOffline(true);
+  await page.reload(); await page.waitForSelector("#panel h2");
+  assert.equal(await page.locator("[aria-label^='October 15, Workout done']").count(), 1, "app shell and saved data, offline");
+  await page.getByRole("tab", { name: "Programs" }).click(); await page.locator("text=21-day running start").waitFor();
+  await ctx.close();
+});
+
+test("update: a new version waits for Reload instead of reloading by itself", async () => {
+  const ctx = await browser.newContext(); const page = await ctx.newPage();
+  await open(page, "/?demo=1");
+  await controlled(page);
+  await page.evaluate(() => { window.__sameDocument = true; });
+  swSuffix = "\n// next release";
+  try {
+    await page.evaluate(() => navigator.serviceWorker.getRegistration().then(r => r.update()));
+    await page.locator("text=A new version of Dojo is ready.").waitFor({ timeout: 15000 });
+    await page.waitForTimeout(500);
+    assert.equal(await page.evaluate(() => window.__sameDocument), true, "no automatic reload");
+    await Promise.all([page.waitForEvent("load"), page.getByRole("button", { name: "Reload" }).click()]);
+    await page.waitForSelector("#panel h2");
+    assert.equal(await page.evaluate(() => window.__sameDocument), undefined, "reloaded onto the new version");
+    assert.equal(await page.locator("text=A new version of Dojo is ready.").count(), 0);
+  } finally { swSuffix = ""; await ctx.close(); }
+});
+
+test("reminder: banner after the chosen time when nothing is logged, once a day", async () => {
+  const ctx = await browser.newContext(); const page = await ctx.newPage();
+  await open(page, "/?today=2026-10-28&now=18:00");
+  await page.evaluate(() => localStorage.setItem("dojo.state", JSON.stringify({ version: 2, settings: { reminder: { on: true, time: "19:00" } } })));
+  await page.reload(); await page.waitForSelector("#panel h2");
+  await page.waitForTimeout(300);
+  assert.equal(await page.locator("text=Nothing logged yet today.").count(), 0, "not before 19:00");
+  await open(page, "/?today=2026-10-28&now=20:00#month/2026-10"); // a real navigation (the query changed); no extra reload, which would use up today's reminder
+  await page.locator("text=Nothing logged yet today.").waitFor();
+  await page.getByRole("button", { name: "Log today" }).click();
+  assert.match(page.url(), /#today$/);
+  await page.locator("[aria-labelledby=t-sets] button", { hasText: "3" }).click();
+  assert.equal(await page.locator("text=Nothing logged yet today.").count(), 0, "goes away once something is logged");
+  await page.evaluate(() => { const s = JSON.parse(localStorage.getItem("dojo.state")); delete s.days["2026-10-28"]; localStorage.setItem("dojo.state", JSON.stringify(s)); });
+  await page.reload(); await page.waitForSelector("#panel h2"); await page.waitForTimeout(300);
+  assert.equal(await page.locator("text=Nothing logged yet today.").count(), 0, "only once a day");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator("input[type=time]").waitFor();
+  await page.addScriptTag({ content: AXE() });
+  const r = await page.evaluate(() => axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] } }));
+  assert.deepEqual(r.violations.map(v => v.id), [], "Settings with the reminder on passes axe");
+  await ctx.close();
+});
+
+test("performance budget: first load under 350 KB", async () => {
+  const ctx = await browser.newContext(); const page = await ctx.newPage();
+  let bytes = 0; page.on("response", async r => { try { bytes += (await r.body()).length; } catch { /* redirects */ } });
+  await open(page, "/?demo=1"); await page.waitForLoadState("networkidle");
+  assert.ok(bytes <= 350 * 1024, `first load was ${(bytes / 1024).toFixed(0)} KB`);
+  console.log(`# first load ${(bytes / 1024).toFixed(0)} KB`);
   await ctx.close();
 });

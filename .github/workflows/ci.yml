@@ -1,0 +1,34 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      # The built files are committed so the folder runs without a toolchain; make sure they match src/.
+      - name: Committed build is up to date
+        run: |
+          if ! git diff --quiet -- dist/app.js sw.js; then
+            echo "::error::dist/app.js or sw.js is out of date. Run 'npm run build' and commit the result."
+            git diff --stat -- dist/app.js sw.js
+            exit 1
+          fi
+      - run: npm run check:budget
+      - run: npm test
+      - name: Screenshots for design review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: test/screenshots/
+          if-no-files-found: ignore

@@ -6,7 +6,7 @@
 //   pf:     { start: "YYYY-MM-DD" | null, pdays: number[] },          // practice weekdays, 0 = Sunday
 //   days:   { "YYYY-MM-DD": { s?, m?, run?, sets?, practice?, pauses?, control?, time? } },
 //   months: { "YYYY-MM": { goal, target, routines, notes } },
-//   settings: { discreet: boolean }                                      // optional in saved data; defaults below
+//   settings: { discreet: boolean, reminder: { on: boolean, time: "HH:MM" } } // optional in saved data; defaults below
 // }
 import { monthKey } from "./logic.js";
 
@@ -15,7 +15,7 @@ export const STORAGE_KEY = "dojo.state";
 const DAY_FIELDS = ["s", "m", "run", "sets", "practice", "pauses", "control", "time"];
 
 export const emptyMonth = () => ({ goal: "", target: "", routines: 0, notes: "" });
-export const emptyState = () => ({ version: VERSION, plan: { start: null, recovery: false }, pf: { start: null, pdays: [1, 3, 5, 0] }, days: {}, months: {}, settings: { discreet: false } });
+export const emptyState = () => ({ version: VERSION, plan: { start: null, recovery: false }, pf: { start: null, pdays: [1, 3, 5, 0] }, days: {}, months: {}, settings: { discreet: false, reminder: { on: false, time: "19:00" } } });
 export const monthOf = (state, key) => state.months[key] || emptyMonth();
 // A day record only keeps meaningful values: no empty strings, zeros, nulls or false.
 // Exception: `sets` keeps 0, because "0 sets today" is an answer and "not answered" is the absence of the field.
@@ -31,7 +31,8 @@ export function validate(input) {
     if (input.plan.seq !== undefined && input.plan.seq !== null) { const q = input.plan.seq; if (!Array.isArray(q) || q.length > 120 || !q.every(v => v === null || (Number.isInteger(v) && v >= 0 && v <= 20))) throw new Error("plan.seq must be a list of plan days."); s.plan.seq = q; } }
   if (input.pf && typeof input.pf === "object") { if (input.pf.start !== null && input.pf.start !== undefined && !isKey(input.pf.start)) throw new Error("pf.start must be a date."); s.pf = { start: input.pf.start || null, pdays: Array.isArray(input.pf.pdays) ? input.pf.pdays.filter(n => Number.isInteger(n) && n >= 0 && n <= 6) : s.pf.pdays }; }
   if (input.days && typeof input.days === "object") for (const [k, v] of Object.entries(input.days)) { if (!isKey(k) || !v || typeof v !== "object") throw new Error(`Bad day entry: ${k}`); const rec = cleanDay(v); if (Object.keys(rec).length) s.days[k] = rec; }
-  if (input.settings && typeof input.settings === "object") s.settings = { discreet: !!input.settings.discreet };
+  if (input.settings && typeof input.settings === "object") { const r = input.settings.reminder || {};
+    s.settings = { discreet: !!input.settings.discreet, reminder: { on: !!r.on, time: /^([01]\d|2[0-3]):[0-5]\d$/.test(r.time || "") ? r.time : "19:00" } }; }
   if (input.months && typeof input.months === "object") for (const [k, v] of Object.entries(input.months)) { if (!isMonth(k) || !v || typeof v !== "object") throw new Error(`Bad month entry: ${k}`); s.months[k] = { ...emptyMonth(), goal: String(v.goal || ""), target: String(v.target || ""), routines: +v.routines || 0, notes: String(v.notes || "") }; }
   return s;
 }

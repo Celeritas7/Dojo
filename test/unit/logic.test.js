@@ -113,3 +113,14 @@ test("a pushed-back gap belongs to the week of the plan day it delays", () => {
   assert.deepEqual(weeks.map(w => [w.week, w.slots.length]), [[0, 7], [1, 8], [2, 7]]);
   assert.equal(weeks[1].slots[0].i, null);
 });
+
+import { reminderDue } from "../../src/logic.js";
+test("reminder is due after the chosen time when nothing is logged, once a day", () => {
+  const st = (on, days = {}) => ({ days, settings: { reminder: { on, time: "19:00" } } });
+  const at = (h, m) => new Date(2026, 9, 28, h, m);
+  assert.equal(reminderDue(st(true), at(18, 59), null), false, "before the time");
+  assert.equal(reminderDue(st(true), at(19, 0), null), true);
+  assert.equal(reminderDue(st(false), at(20, 0), null), false, "off");
+  assert.equal(reminderDue(st(true, { "2026-10-28": { sets: 0 } }), at(20, 0), null), false, "something logged");
+  assert.equal(reminderDue(st(true), at(20, 0), "2026-10-28"), false, "already reminded today");
+});

@@ -75,6 +75,14 @@ export const planLine = info => (info.what.toLowerCase().includes(info.label.toL
 // One flag per plan day: done if any date it was scheduled on is ticked.
 export const planDone = state => { if (!state.plan.start) return []; const done = PLAN.map(() => false); for (const s of planSlots(state.plan)) if (s.i !== null && (state.days[s.key] || {}).run) done[s.i] = true; return done; };
 
+// ---- reminders ----
+// Due when reminders are on, the chosen time has passed today, nothing is logged for today, and we haven't reminded today.
+export function reminderDue(state, now, lastReminded) {
+  const r = state.settings && state.settings.reminder; if (!r || !r.on) return false;
+  const [h, m] = r.time.split(":").map(Number), today = iso(now);
+  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m && !state.days[today] && lastReminded !== today;
+}
+
 // ---- streaks and trends ----
 const trained = e => e.s === "done" || e.s === "light";
 // Walk back from today (or yesterday, if today has nothing yet): done/light count, rest days are neutral,
