@@ -54,7 +54,7 @@ Dark mode: `prefers-color-scheme` unless the person picks Light or Dark in Setti
 
 Radii `--radius-xs…xl`, `--radius-pill`. Every interactive control is **≥ 44 × 44 px** (pills, nav arrows, counter, close buttons, tabs, banner buttons).
 
-## Components (`js/lib/dojo-components.js` + `src/screens/`)
+## Components (`src/components.js` + `src/screens/`)
 
 | Component | Variants / props | Notes |
 |---|---|---|

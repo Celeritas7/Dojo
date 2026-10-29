@@ -1,5 +1,4 @@
-import { DS } from "../env.js";
-const { Tab, TabList } = DS;
+import { Tab, TabList } from "../components.js";
 
 export const TABS = [["today", "Today"], ["month", "Month"], ["programs", "Programs"]];
 

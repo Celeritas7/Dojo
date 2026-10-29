@@ -56,7 +56,7 @@ css/
   styles.css            design tokens (colours, type, spacing)
   base.css              reset, focus ring, reduced motion
 src/
-  main.jsx              entry: globals → component library → <App/>
+  main.jsx              entry: renders <App/>
   env.js                today's date and the ?demo / ?today switches
   route.js              view <-> URL hash
   words.js              program vocabulary (normal / discreet)
@@ -66,10 +66,10 @@ src/
   store.js              state shape, validation, localStorage, backup import/export
   reducers.js           pure state transitions used by the screens
   demo.js               sample state for ?demo=1
+  components.js         the component library (calendar cells, pills, dialog, tabs, charts' neighbours)
   App.jsx               wiring, persistence, update and reminder banners
   pwa.js                service worker registration, update prompt, notifications
   screens/              Header, Today, Sheet (Month), Programs, DayEditor, Settings, Toast
-js/lib/dojo-components.js   compiled component library (design-system snapshot; expects a global React)
 scripts/build.js        esbuild bundle
 scripts/fetch-fonts.js  one-off download of the font files
 scripts/make-icons.js   renders icons/icon.svg to PNG

@@ -1,8 +1,8 @@
 import React from "react";
-import { DS, TODAY } from "../env.js";
+import { TODAY } from "../env.js";
 import { STATES, parseISO, fmtDate, runIdx, runInfo, planLine, pfHelpers } from "../logic.js";
 import { words } from "../words.js";
-const { Dialog, DialogSection, StateGrid, Pill, Field } = DS;
+import { Dialog, DialogSection, StateGrid, Pill, Field } from "../components.js";
 
 export function DayEditor({ state, dayKey: k, onClose, onSave, onClear }) {
   const date = parseISO(k), e = state.days[k] || {};
