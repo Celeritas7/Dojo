@@ -30,14 +30,14 @@ function DowHeader({
   trailing = "Week"
 }) {
   const s = {
-    font: "700 14px var(--font-display)",
+    font: "700 var(--text-small) var(--font-display)",
     letterSpacing: ".01em",
     color: "var(--ink-2)",
     textAlign: "center",
     padding: "4px 0"
   };
-  return /*#__PURE__*/React.createElement(React.Fragment, null, labels.map(l => /*#__PURE__*/React.createElement("div", {
-    key: l,
+  return /*#__PURE__*/React.createElement(React.Fragment, null, labels.map((l, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
     style: s
   }, l)), trailing && /*#__PURE__*/React.createElement("div", {
     style: s
@@ -97,12 +97,12 @@ function WeekTally({
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 11,
+      fontSize: "var(--text-caption)",
       color: "var(--ink-2)"
     }
   }, "Wk ", week), /*#__PURE__*/React.createElement("b", {
     style: {
-      font: "800 20px/1 var(--font-display)",
+      font: "800 var(--text-subhead)/1 var(--font-display)",
       letterSpacing: ".01em",
       color: "var(--ink)"
     }
@@ -147,8 +147,8 @@ try { (() => {
 const b = {
   font: "inherit",
   cursor: "pointer",
-  width: 32,
-  height: 32,
+  width: 44,
+  height: 44,
   borderRadius: "50%",
   border: "1.5px solid var(--line)",
   background: "var(--card)",
@@ -177,7 +177,15 @@ function Counter({
     "aria-label": minusLabel,
     style: b,
     onClick: () => onChange && onChange(Math.max(min, value - 1))
-  }, "\u2212"), /*#__PURE__*/React.createElement("button", {
+  }, "\u2212"), /*#__PURE__*/React.createElement("output", {
+    "aria-live": "polite",
+    style: {
+      minWidth: 28,
+      textAlign: "center",
+      font: "800 var(--text-subhead)/1 var(--font-display)",
+      color: "var(--ink)"
+    }
+  }, value), /*#__PURE__*/React.createElement("button", {
     type: "button",
     "aria-label": plusLabel,
     style: b,
@@ -197,7 +205,7 @@ const inputStyle = {
   borderRadius: "var(--radius-sm)",
   padding: "9px 11px",
   color: "var(--ink)",
-  fontSize: 15
+  fontSize: "var(--text-body)"
 };
 /** .field — 13px muted label above an input/textarea/select. Pass children to replace the control (e.g. Pills). */
 function Field({
@@ -239,7 +247,7 @@ function Field({
       flexDirection: inline ? "row" : "column",
       alignItems: inline ? "center" : undefined,
       gap: inline ? 8 : 4,
-      fontSize: 13,
+      fontSize: "var(--text-small)",
       color: "var(--ink-2)",
       ...style
     }
@@ -260,8 +268,10 @@ const ICONS = {
 /** Dojo glyph. name: run | walk | rest | finish | check. Inherits currentColor. */
 function Icon({
   name,
+  size,
   style
 }) {
+  const svg = ICONS[name] || "";
   return /*#__PURE__*/React.createElement("span", {
     "aria-hidden": "true",
     style: {
@@ -270,7 +280,7 @@ function Icon({
       ...style
     },
     dangerouslySetInnerHTML: {
-      __html: ICONS[name] || ""
+      __html: size ? svg.replace(/width="\d+" height="\d+"/, 'width="' + size + '" height="' + size + '"') : svg
     }
   });
 }
@@ -281,9 +291,9 @@ Object.assign(__ds_scope, { Icon });
 try { (() => {
 const KIND = {
   run: "var(--run)",
-  walk: "var(--walk)",
+  walk: "var(--walk-ink)",
   rest: "var(--ink-2)",
-  finish: "var(--finish)"
+  finish: "var(--finish-ink)"
 };
 /** .day — 21-day running plan card (numbered, kind, description, duration, check) */
 function DayCard({
@@ -308,8 +318,10 @@ function DayCard({
   }[kind];
   return /*#__PURE__*/React.createElement("button", {
     type: "button",
+    className: "dj-cell",
     onClick: onClick,
     "aria-pressed": done,
+    "aria-current": today ? "date" : undefined,
     style: {
       font: "inherit",
       cursor: "pointer",
@@ -327,25 +339,29 @@ function DayCard({
       transition: "border-color .15s,background .15s",
       ...style
     }
-  }, today && /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
-      position: "absolute",
-      top: 8,
-      right: 8,
-      font: "700 11px var(--font-display)",
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      font: "800 var(--text-heading)/1 var(--font-display)",
+      letterSpacing: ".01em"
+    }
+  }, String(n).padStart(2, "0")), today && /*#__PURE__*/React.createElement("span", {
+    style: {
+      font: "700 var(--text-caption) var(--font-display)",
       background: "var(--lane)",
-      color: "#fff",
+      color: "var(--on-lane)",
       padding: "1px 6px",
       borderRadius: "var(--radius-pill)"
     }
-  }, "Today"), /*#__PURE__*/React.createElement("span", {
+  }, "Today")), /*#__PURE__*/React.createElement("span", {
     style: {
-      font: "800 26px/1 var(--font-display)",
-      letterSpacing: ".01em"
-    }
-  }, String(n).padStart(2, "0")), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
+      fontSize: "var(--text-caption)",
       color: "var(--ink-2)"
     }
   }, date), /*#__PURE__*/React.createElement("span", {
@@ -353,7 +369,7 @@ function DayCard({
       display: "inline-flex",
       alignItems: "center",
       gap: 4,
-      font: "700 14px var(--font-display)",
+      font: "700 var(--text-small) var(--font-display)",
       letterSpacing: ".01em",
       marginTop: 6,
       color: KIND[kind]
@@ -362,12 +378,12 @@ function DayCard({
     name: kind
   }), " ", lbl), /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 13,
+      fontSize: "var(--text-small)",
       lineHeight: 1.3
     }
   }, what, extra && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("br", null), "\xD7 ", extra)), /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 12,
+      fontSize: "var(--text-caption)",
       color: "var(--ink-2)",
       marginTop: "auto"
     }
@@ -379,7 +395,7 @@ function DayCard({
       width: 24,
       height: 24,
       borderRadius: "50%",
-      border: done ? "2px solid var(--done)" : "2px dashed var(--ink-2)",
+      border: done ? "2px solid var(--done)" : "1.5px solid var(--ink-2)",
       background: done ? "var(--done)" : "transparent",
       color: "var(--done-ink)",
       display: "grid",
@@ -407,7 +423,7 @@ function HabitDot({
     borderRadius: "50%",
     display: "grid",
     placeItems: "center",
-    fontSize: 13,
+    fontSize: "var(--text-small)",
     fontWeight: 700,
     flex: "none",
     boxSizing: "border-box"
@@ -426,13 +442,22 @@ function HabitDot({
   } : status === "rest" ? {
     background: "var(--rest)",
     border: "2px solid var(--rest)",
-    color: "var(--card)"
+    color: "var(--ink)"
   } : {
-    border: "2px dashed var(--ink-2)"
+    border: "1.5px solid var(--ink-2)"
   };
-  const sym = symbol && size >= 24 ? status === "done" ? /*#__PURE__*/React.createElement(__ds_scope.Icon, {
-    name: "check"
-  }) : status === "missed" ? "✕" : null : null;
+  // Status is never colour alone: done ✓, missed ✕, rest moon; light is a half disc.
+  const g = Math.round(size * .62);
+  const sym = symbol && size >= 14 ? status === "done" ? /*#__PURE__*/React.createElement(__ds_scope.Icon, {
+    name: "check",
+    size: g
+  }) : status === "rest" ? /*#__PURE__*/React.createElement(__ds_scope.Icon, {
+    name: "rest",
+    size: g
+  }) : status === "missed" ? /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    style: { fontSize: g, lineHeight: 1 }
+  }, "\u2715") : null : null;
   return /*#__PURE__*/React.createElement("span", {
     style: {
       ...base,
@@ -490,7 +515,7 @@ function CalendarCell({
   }, /*#__PURE__*/React.createElement("span", {
     style: {
       alignSelf: "flex-start",
-      font: "700 15px/1 var(--font-display)",
+      font: "700 var(--text-body)/1 var(--font-display)",
       letterSpacing: ".01em"
     }
   }, day), /*#__PURE__*/React.createElement(__ds_scope.HabitDot, {
@@ -498,7 +523,7 @@ function CalendarCell({
     size: 28
   }), /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 12,
+      fontSize: "var(--text-caption)",
       color: "var(--ink-2)",
       lineHeight: 1.1
     }
@@ -511,9 +536,9 @@ Object.assign(__ds_scope, { CalendarCell });
 try { (() => {
 const KIND = {
   run: "var(--run)",
-  walk: "var(--walk)",
+  walk: "var(--walk-ink)",
   rest: "var(--ink-2)",
-  finish: "var(--finish)"
+  finish: "var(--finish-ink)"
 };
 /** .rp — run-plan chip: outlined in kind colour, solid when ok (done) */
 function RunChip({
@@ -529,7 +554,7 @@ function RunChip({
       display: "inline-flex",
       alignItems: "center",
       gap: 3,
-      font: "700 13px var(--font-display)",
+      font: "700 var(--text-small) var(--font-display)",
       letterSpacing: ".01em",
       borderRadius: "var(--radius-xs)",
       padding: hideLabel ? "1px 2px" : "1px 5px",
@@ -577,8 +602,10 @@ function SheetCell({
   });
   return /*#__PURE__*/React.createElement("button", {
     type: "button",
+    className: "dj-cell",
     onClick: onClick,
     "aria-label": ariaLabel,
+    "aria-current": today ? "date" : undefined,
     style: {
       font: "inherit",
       cursor: "pointer",
@@ -603,13 +630,13 @@ function SheetCell({
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      font: "800 17px/1 var(--font-display)",
-      letterSpacing: ".01em"
+      font: "800 var(--text-body)/1 var(--font-display)",
+      letterSpacing: ".01em",
+      ...(today ? { background: "var(--lane)", color: "var(--on-lane)", borderRadius: "var(--radius-pill)", padding: "2px 5px", margin: "-2px 0 0 -3px" } : null)
     }
   }, day), (status || pending) && /*#__PURE__*/React.createElement(__ds_scope.HabitDot, {
     status: status,
-    size: compact ? 12 : 18,
-    symbol: false
+    size: compact ? 14 : 18
   })), run && /*#__PURE__*/React.createElement(__ds_scope.RunChip, {
     kind: run.kind,
     label: run.label,
@@ -624,12 +651,12 @@ function SheetCell({
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      fontSize: 12,
+      fontSize: "var(--text-caption)",
       color: "var(--ink-2)"
     }
   }, /*#__PURE__*/React.createElement("span", null, !compact && mins ? mins + " min" : ""), practice && /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 13,
+      fontSize: "var(--text-small)",
       color: "var(--lane)",
       lineHeight: 1,
       opacity: practice === "planned" ? .45 : 1
@@ -656,12 +683,13 @@ function NavButton({
     style: {
       font: "inherit",
       cursor: "pointer",
-      width: 40,
-      height: 40,
+      width: 44,
+      height: 44,
+      flex: "none",
       borderRadius: "50%",
       border: "1.5px solid var(--line)",
       background: "var(--card)",
-      fontSize: 18,
+      fontSize: "var(--text-body)",
       fontWeight: 700,
       color: "var(--ink)",
       ...style
@@ -695,6 +723,7 @@ function Pill({
       padding: "6px 14px",
       fontWeight: 600,
       minWidth: 44,
+      minHeight: 44,
       whiteSpace: "nowrap",
       ...style
     }
@@ -713,18 +742,22 @@ function Tab({
   style,
   ...rest
 }) {
+  // Segment of a segmented control (see TabList): raised card-colour segment when selected, quiet text otherwise.
   return /*#__PURE__*/React.createElement("button", _extends({
     type: "button",
     role: "tab",
-    "aria-selected": selected
+    "aria-selected": selected,
+    tabIndex: selected ? 0 : -1
   }, rest, {
     style: {
       font: "inherit",
       cursor: "pointer",
-      border: "1.5px solid " + (selected ? "var(--ink)" : "var(--line)"),
-      background: selected ? "var(--ink)" : "var(--card)",
-      color: selected ? "var(--paper)" : "var(--ink)",
-      padding: "8px 16px",
+      border: "none",
+      background: selected ? "var(--card)" : "transparent",
+      color: selected ? "var(--ink)" : "var(--ink-2)",
+      boxShadow: selected ? "0 1px 3px rgba(15,22,38,.18)" : "none",
+      minHeight: 40,
+      padding: "8px 18px",
       borderRadius: "var(--radius-pill)",
       fontWeight: 600,
       whiteSpace: "nowrap",
@@ -753,7 +786,7 @@ function Toggle({
       border: "1px solid var(--line)",
       padding: "8px 12px",
       borderRadius: "var(--radius-md)",
-      fontSize: 14,
+      fontSize: "var(--text-small)",
       cursor: "pointer",
       whiteSpace: "nowrap",
       ...style
@@ -834,7 +867,7 @@ function Lanes({
       position: "absolute",
       top: "50%",
       transform: "translate(-50%,-50%)",
-      font: "700 13px " + "var(--font-display)",
+      font: "700 var(--text-small) " + "var(--font-display)",
       background: "var(--ink)",
       color: "var(--paper)",
       padding: "2px 8px",
@@ -861,7 +894,7 @@ function Legend({
       gap: 14,
       flexWrap: "wrap",
       margin: "12px 0",
-      fontSize: 13,
+      fontSize: "var(--text-small)",
       color: "var(--ink-2)",
       alignItems: "center",
       ...style
@@ -891,7 +924,7 @@ function Motto({
 }) {
   return /*#__PURE__*/React.createElement("p", {
     style: {
-      font: "italic 500 17px var(--font-body)",
+      font: "italic 500 var(--text-body) var(--font-body)",
       color: "var(--ink-2)",
       margin: "0 0 14px",
       ...style
@@ -918,7 +951,7 @@ function Rule({
   }, /*#__PURE__*/React.createElement("h3", {
     style: {
       margin: 0,
-      font: "700 18px/1.2 var(--font-display)",
+      font: "700 var(--text-body)/1.2 var(--font-display)",
       letterSpacing: ".01em",
       color: "var(--ink)"
     }
@@ -926,7 +959,7 @@ function Rule({
     style: {
       margin: "2px 0 0",
       color: "var(--ink-2)",
-      fontSize: 14,
+      fontSize: "var(--text-small)",
       lineHeight: 1.35
     }
   }, children));
@@ -953,7 +986,7 @@ function Stage({
     }
   }, /*#__PURE__*/React.createElement("b", {
     style: {
-      font: "800 20px/1.2 var(--font-display)",
+      font: "800 var(--text-subhead)/1.2 var(--font-display)",
       letterSpacing: ".01em",
       display: "block",
       color: "var(--ink)"
@@ -961,7 +994,7 @@ function Stage({
   }, title), React.Children.map(children, (c, i) => /*#__PURE__*/React.createElement("span", {
     key: i,
     style: {
-      fontSize: 13,
+      fontSize: "var(--text-small)",
       color: "var(--ink-2)",
       display: "block",
       lineHeight: 1.35,
@@ -991,14 +1024,14 @@ function Stat({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      font: "800 36px/1 var(--font-display)",
+      font: "800 var(--text-title)/1 var(--font-display)",
       letterSpacing: ".01em",
       color: "var(--ink)"
     }
   }, value), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "var(--ink-2)",
-      fontSize: 14
+      fontSize: "var(--text-small)"
     }
   }, label), children);
 }
@@ -1011,10 +1044,13 @@ try { (() => {
 function Strip({
   days = [],
   columns = 14,
+  label,
   style
 }) {
   const bg = ["var(--line)", "var(--strip-1)", "var(--strip-2)", "var(--done)"];
   return /*#__PURE__*/React.createElement("div", {
+    role: "list",
+    "aria-label": label,
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(" + columns + ",1fr)",
@@ -1024,6 +1060,8 @@ function Strip({
     }
   }, days.map((d, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
+    role: "listitem",
+    "aria-label": d.title,
     title: d.title,
     style: {
       aspectRatio: "1",
@@ -1031,7 +1069,7 @@ function Strip({
       background: bg[Math.min(3, d.sets || 0)],
       display: "grid",
       placeItems: "center",
-      fontSize: 10,
+      fontSize: "var(--text-caption)",
       color: (d.sets || 0) >= 3 ? "var(--done-ink)" : "var(--ink-2)",
       boxShadow: d.practice ? "inset 0 -4px 0 var(--lane)" : "none"
     }
@@ -1052,7 +1090,7 @@ function Tip({
       borderLeft: "3px solid var(--lane)",
       padding: "4px 12px",
       color: "var(--ink-2)",
-      fontSize: 14,
+      fontSize: "var(--text-small)",
       margin: "0 0 10px",
       lineHeight: 1.5,
       ...style
@@ -1082,7 +1120,7 @@ function CheckinCard({
     ...style
   };
   const h = {
-    font: "700 24px/1.2 var(--font-display)",
+    font: "700 var(--text-heading)/1.2 var(--font-display)",
     letterSpacing: ".01em",
     margin: "0 0 2px",
     color: "var(--ink)"
@@ -1102,7 +1140,7 @@ function CheckinCard({
   }, title), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "var(--ink-2)",
-      fontSize: 14,
+      fontSize: "var(--text-small)",
       marginTop: 8
     }
   }, summary)), /*#__PURE__*/React.createElement(__ds_scope.Button, {
@@ -1146,9 +1184,11 @@ function Details({
   open = false,
   onToggle,
   children,
+  id,
   style
 }) {
   return /*#__PURE__*/React.createElement("details", {
+    id: id,
     open: open,
     onToggle: e => onToggle && onToggle(e.target.open),
     style: {
@@ -1161,7 +1201,7 @@ function Details({
     }
   }, /*#__PURE__*/React.createElement("summary", {
     style: {
-      font: "700 20px/1.3 var(--font-display)",
+      font: "700 var(--text-subhead)/1.3 var(--font-display)",
       letterSpacing: ".01em",
       cursor: "pointer",
       color: "var(--ink)",
@@ -1255,7 +1295,7 @@ function Dialog({
   }, title && /*#__PURE__*/React.createElement("h3", {
     style: {
       margin: 0,
-      font: "700 24px/1.2 var(--font-display)",
+      font: "700 var(--text-heading)/1.2 var(--font-display)",
       letterSpacing: ".01em"
     }
   }, title), onClose && /*#__PURE__*/React.createElement("button", {
@@ -1269,12 +1309,12 @@ function Dialog({
       background: "transparent",
       color: "var(--ink-2)",
       borderRadius: "50%",
-      width: 36,
-      height: 36,
+      width: 44,
+      height: 44,
       flex: "none",
       display: "grid",
       placeItems: "center",
-      fontSize: 18,
+      fontSize: "var(--text-body)",
       lineHeight: 1
     }
   }, "\u2715")), children, error && /*#__PURE__*/React.createElement("p", {
@@ -1282,7 +1322,7 @@ function Dialog({
     style: {
       margin: "12px 0 0",
       color: "var(--missed)",
-      fontSize: 14
+      fontSize: "var(--text-small)"
     }
   }, error), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1297,6 +1337,37 @@ function Dialog({
   }, clearLabel), /*#__PURE__*/React.createElement(__ds_scope.Button, {
     type: "submit"
   }, saveLabel))));
+}
+/** Segmented-control track for Tab; ←/→/Home/End move selection (tabs activate on focus). */
+function TabList({
+  label,
+  children,
+  style
+}) {
+  const onKeyDown = e => {
+    const tabs = [...e.currentTarget.querySelectorAll('[role="tab"]')];
+    const i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    const next = e.key === "ArrowRight" ? (i + 1) % tabs.length : e.key === "ArrowLeft" ? (i - 1 + tabs.length) % tabs.length : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : -1;
+    if (next < 0) return;
+    e.preventDefault();
+    tabs[next].focus();
+    tabs[next].click();
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    role: "tablist",
+    "aria-label": label,
+    onKeyDown: onKeyDown,
+    style: {
+      display: "inline-flex",
+      gap: 2,
+      padding: 2,
+      borderRadius: "var(--radius-pill)",
+      background: "var(--tint-ink-strong)",
+      border: "1px solid var(--line)",
+      ...style
+    }
+  }, children);
 }
 /** .dsec — hairline-topped section inside the dialog */
 function DialogSection({
@@ -1315,12 +1386,12 @@ function DialogSection({
   }, title && /*#__PURE__*/React.createElement("h4", {
     style: {
       margin: "0 0 6px",
-      font: "700 17px/1.2 var(--font-display)",
+      font: "700 var(--text-body)/1.2 var(--font-display)",
       letterSpacing: ".01em"
     }
   }, title), children);
 }
-Object.assign(__ds_scope, { Dialog, DialogSection });
+Object.assign(__ds_scope, { Dialog, DialogSection, TabList });
 })(); } catch (e) { __ds_ns.__errors.push({ path: "components/overlays/Dialog.jsx", error: String((e && e.message) || e) }); }
 
 // components/overlays/StateGrid.jsx
@@ -1350,18 +1421,26 @@ function StateGrid({
       style: {
         font: "inherit",
         cursor: "pointer",
-        border: "1.5px solid " + (on ? "var(--ink)" : "var(--line)"),
-        background: on ? "var(--tint-ink-strong)" : "var(--paper)",
+        border: on ? "2px solid var(--ink)" : "1.5px solid var(--line)",
+        background: on ? "var(--card)" : "var(--paper)",
         color: "var(--ink)",
         borderRadius: "var(--radius-md)",
-        padding: 10,
+        padding: on ? 9 : "9.5px",
+        minHeight: 48,
         fontWeight: 600,
         display: "flex",
         alignItems: "center",
         gap: 8,
         textAlign: "left"
       }
-    }, o.label);
+    }, /*#__PURE__*/React.createElement(__ds_scope.HabitDot, {
+      status: o.value,
+      size: 18
+    }), /*#__PURE__*/React.createElement("span", {
+      style: { flex: 1 }
+    }, o.label), on && /*#__PURE__*/React.createElement(__ds_scope.Icon, {
+      name: "check"
+    }));
   }));
 }
 Object.assign(__ds_scope, { StateGrid });
@@ -1428,5 +1507,7 @@ __ds_ns.Dialog = __ds_scope.Dialog;
 __ds_ns.DialogSection = __ds_scope.DialogSection;
 
 __ds_ns.StateGrid = __ds_scope.StateGrid;
+
+__ds_ns.TabList = __ds_scope.TabList;
 
 })();

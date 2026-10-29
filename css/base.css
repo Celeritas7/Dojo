@@ -1,9 +1,21 @@
 *,*::before,*::after{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 var(--font-body)}
+body{margin:0;background:var(--paper);color:var(--ink);font:var(--text-body)/1.5 var(--font-body)}
 button,input,textarea,select{font:inherit;color:inherit}
 a{color:var(--lane)}
 a:hover{color:var(--ink)}
 :focus-visible{outline:3px solid var(--lane);outline-offset:2px;border-radius:6px}
 details summary{list-style:revert}
-@media (prefers-reduced-motion: reduce){*{transition:none!important}
+/* Number fields: no spinner arrows; the numeric keyboard does the job on phones. */
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+/* Hover and press feedback for every button; day cells and plan cards also get a hover ring. */
+button{transition:filter var(--motion-ui),transform var(--motion-ui),box-shadow var(--motion-ui)}
+@media (hover:hover){
+  button:hover:not(:disabled){filter:brightness(.96)}
+  :root[data-theme="dark"] button:hover:not(:disabled){filter:brightness(1.15)}
+  .dj-cell:hover{box-shadow:0 0 0 2px var(--ink-2)}
 }
+@media (hover:hover) and (prefers-color-scheme:dark){:root:not([data-theme="light"]) button:hover:not(:disabled){filter:brightness(1.15)}}
+button:active:not(:disabled){transform:translateY(1px)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}button:active:not(:disabled){transform:none}}
