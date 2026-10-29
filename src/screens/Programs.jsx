@@ -52,7 +52,8 @@ function RunPlanView({ state, setPlan, toggleRun, onPlanAction }) {
         <Toggle checked={rec} onChange={v => setPlan({ recovery: v })}>Rest days become recovery walks</Toggle>
       </div>
     </div>
-    {start && <div role="group" aria-label="Adjust the plan" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+    {start && <p id="plan-adjust-hint" style={{ margin: "0 0 6px", color: "var(--ink-2)", fontSize: "var(--text-small)" }}>Week felt hard? Repeat it. Missed today? Push the plan back a day. Every change can be undone.</p>}
+    {start && <div role="group" aria-label="Adjust the plan" aria-describedby="plan-adjust-hint" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
       {inPlan && week && <Button variant="ghost" onClick={() => onPlanAction("repeat")} style={{ minHeight: 44 }}>Repeat week {week.week + 1}</Button>}
       {inPlan && <Button variant="ghost" onClick={() => onPlanAction("push")} style={{ minHeight: 44 }}>Push back a day</Button>}
       <Button variant="ghost" onClick={() => onPlanAction("restart")} style={{ minHeight: 44 }}>Start again today</Button>

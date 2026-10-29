@@ -55,7 +55,7 @@ export function App() {
     const prev = state.plan, next = { repeat: repeatWeek, push: pushBack, restart: restartPlan }[kind](state, TODAY);
     if (next === state) { flash("Nothing to change."); return; }
     setState(next);
-    flash({ repeat: "Week added again.", push: "Plan pushed back a day.", restart: "Plan restarts today." }[kind], { label: "Undo", onClick: () => apply(s => ({ ...s, plan: prev }), "Plan restored.") });
+    flash({ repeat: "Week repeated; later days move back a week.", push: "Plan pushed back a day.", restart: "Plan restarts today." }[kind], { label: "Undo", onClick: () => apply(s => ({ ...s, plan: prev }), "Plan restored.") });
   };
   const { view } = route;
   return <div style={{ maxWidth: 1080, margin: "0 auto", padding: "20px 16px 48px" }}>
