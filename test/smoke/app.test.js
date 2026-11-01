@@ -271,6 +271,35 @@ test("Settings: theme Auto / Dark / Light is applied and remembered", async () =
   await ctx.close();
 });
 
+test("gym: Where shows after Done, a gym counts down to an hour, Month counts 1-hour sessions; guides open", async () => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } }); const page = await ctx.newPage();
+  await open(page, "/?today=2026-11-02");
+  assert.equal(await page.getByRole("group", { name: "Where" }).count(), 0, "no place before a status");
+  await page.getByRole("button", { name: "Workout done", exact: true }).click();
+  await page.getByRole("button", { name: "chocoZAP", exact: true }).click();
+  await page.getByLabel("Minutes", { exact: true }).fill("45");
+  await page.locator("text=15 min to go for a full hour.").waitFor();
+  await page.getByLabel("Minutes", { exact: true }).fill("60");
+  await page.locator("text=Full hour done.").waitFor();
+  assert.deepEqual((await stored(page)).days["2026-11-02"], { s: "done", m: 60, where: "chocozap" });
+  await page.getByRole("button", { name: "Rest day", exact: true }).click();
+  assert.equal((await stored(page)).days["2026-11-02"].where, undefined, "a rest day has no place");
+  await page.getByRole("button", { name: "Workout done", exact: true }).click();
+  await page.getByRole("button", { name: "Other gym", exact: true }).click();
+  await page.locator("summary", { hasText: "A 1-hour gym session" }).click();
+  await page.locator("text=Machine circuit").waitFor();
+  await page.locator("summary", { hasText: "On the way home, in office clothes" }).click();
+  await page.locator("text=Get off one stop early").waitFor();
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth) <= 390, "no horizontal scroll");
+  await page.addScriptTag({ content: AXE() });
+  const r = await page.evaluate(() => axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] } }));
+  assert.deepEqual(r.violations.map(v => v.id), [], "Today with places and guides passes axe");
+  await page.screenshot({ path: join(SHOTS, "phone-today-gym.png"), fullPage: true });
+  await page.getByRole("tab", { name: "Month" }).click();
+  assert.equal(await page.locator("text=1-hour gym sessions").locator("..").innerText().then(t => /\b1\b/.test(t)), true);
+  await ctx.close();
+});
+
 test("theme: Dark picked in Settings sets every token exactly as the system dark theme does", async () => {
   // Every custom property declared on :root, read as computed (var() resolved), so a token missing from either dark block shows up.
   const tokens = page => page.evaluate(() => {

@@ -8,8 +8,8 @@ A personal training log used daily, mostly on a phone, often in public. Three vi
 
 | View | Job | Default? |
 |---|---|---|
-| **Today** (`#today`) | Log the day in about three taps; see this week and the current streak | Yes |
-| **Month** (`#month/YYYY-MM`) | Calendar, the month's figures, minutes-per-week chart, month review | |
+| **Today** (`#today`) | Log the day in about three taps, including where you trained; see this week and the current streak; Ideas (a 1-hour gym session, moves for the way home in office clothes) | Yes |
+| **Month** (`#month/YYYY-MM`) | Calendar, the month's figures (including 1-hour gym sessions), minutes-per-week chart, month review | |
 | **Programs** (`#programs/run`, `#programs/pf`) | 21-day running plan with schedule controls; pelvic-floor program with control chart | |
 | **Settings** (dialog) | Theme, discreet mode, reminder, backup / restore / clear | |
 
@@ -78,7 +78,9 @@ Radii `--radius-xs…xl`, `--radius-pill`. Every interactive control is **≥ 44
 | Day cell / plan card | Hover | 2 px `--ink-2` ring |
 | Any control | Keyboard focus | 3 px `--lane` outline, 2 px offset |
 | Today answers | Tap | Saves immediately; toast "Saved." |
-| Workout option | Tap the selected one | Clears it and its minutes |
+| Workout option | Tap the selected one | Clears it, its minutes and its place |
+| Where (Today, day editor) | Shown once Done or Light is chosen | chocoZAP, Other gym, Home, Commute, Outside; tap the selected one to clear it. Choosing Rest or Missed drops the place |
+| Gym day (chocoZAP or Other gym) | Minutes below 60 | "N min to go for a full hour." under the workout; at 60 or more, "Full hour done." |
 | Day editor | Minutes without a status | Refuses with inline alert "Choose Done, Light, Rest or Missed…" |
 | Clear day | Tap | Clears at once; toast with **Undo** (8 s, held on hover/focus) |
 | Plan controls | Repeat / push back / restart | Changes the schedule; toast with **Undo** that restores the previous plan exactly |
@@ -105,6 +107,7 @@ Grids for stats, rules and stages auto-fit (`autoGrid(min)`). No horizontal scro
 - **Plan lines** use `planLine()`, which never repeats the kind ("Run 2 min, walk 2 min, 6 rounds").
 - **Messages**: sentence case, name the object, end with a full stop ("Day cleared.", "Plan pushed back a day.").
 - **Status order** is Done, Light, Rest, Missed everywhere.
+- **Places** come from `PLACES` in `src/logic.js` (order: chocoZAP, Other gym, Home, Commute, Outside). The gym goal is `GYM_GOAL` (60 min); the two Ideas lists are `GYM_HOUR` and `COMMUTE_MOVES`. Commute moves must need no change of clothes and look ordinary in public.
 
 ## Edge cases
 
@@ -113,7 +116,7 @@ Grids for stats, rules and stages auto-fit (`autoGrid(min)`). No horizontal scro
 - **Plan schedule**: gaps belong to the week they delay; repeated weeks are labelled "· again"; progress counts each plan day once.
 - **Offline**: everything works after one visit; nothing to show differently.
 - **Storage blocked or full**: toast "Couldn't save on this device. Download a backup to keep your changes."
-- **Old saves**: missing `settings`, `plan.seq` or reminder fields load with defaults; bad values fall back (validated in `store.js`).
+- **Old saves**: missing `settings`, `plan.seq` or reminder fields load with defaults; bad values fall back (validated in `store.js`). A day's `where` is dropped on load unless it is a known place on a Done or Light day.
 
 ## Motion
 
@@ -140,6 +143,7 @@ Grids for stats, rules and stages auto-fit (`autoGrid(min)`). No horizontal scro
 | No horizontal scroll at 390 / 320 px | smoke: "layout…" |
 | Discreet vocabulary everywhere | smoke: "discreet mode…" |
 | Installable, offline, update prompt, reminder, first-load budget | smoke: Phase 5 tests |
+| Where after Done, gym hour countdown, Month's 1-hour count, Ideas open, axe | smoke: "gym: Where shows after Done…" |
 | Start today from Programs or Today, with Undo; card taps before a start save nothing | smoke: "Start today: one tap starts the plan…" |
 | Both dark blocks set the same tokens | smoke: "theme: Dark picked in Settings sets every token…" |
 | Committed `dist/` and `sw.js` match the source; bundle budget | CI (`.github/workflows/ci.yml`), `npm run verify` |

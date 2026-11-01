@@ -11,13 +11,13 @@ export function runDefaults(state, k) {
   return { s: info.kind === "rest" && !state.plan.recovery ? "rest" : "done", m: info.mins || 0 };
 }
 
-// Day editor "Save day". ed = { s, m, run, sets, practice, pauses, control, time }.
+// Day editor "Save day". ed = { s, m, where, run, sets, practice, pauses, control, time }.
 // `run` is null outside the plan; `sets` is null until the person answers (0 is a real answer).
 // Minutes are only kept with a status; the editor refuses to save minutes without one.
 export function saveDay(state, k, ed) {
   const mins = +ed.m || 0;
   const rec = { run: ed.run === true, sets: ed.sets };
-  if (ed.s) { rec.s = ed.s; rec.m = mins; }
+  if (ed.s) { rec.s = ed.s; rec.m = mins; if (ed.s === "done" || ed.s === "light") rec.where = ed.where; }
   if (ed.practice) { rec.practice = ed.practice; if (ed.practice === "yes") { rec.pauses = ed.pauses; rec.control = ed.control; rec.time = ed.time; } }
   return withDay(state, k, rec);
 }

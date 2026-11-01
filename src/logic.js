@@ -16,6 +16,15 @@ export const PLAN_DAYS = PLAN.length;
 export const PLAN_RUNS = PLAN.filter(p => p[0] === "run" || p[0] === "finish").length;
 export const WEEKS = [["Week 1","Build the habit"],["Week 2","Longer intervals"],["Week 3","Toward non-stop"]];
 export const STATES = {done:"Workout done",light:"Light / partial",rest:"Rest day",missed:"Missed"};
+// Where a workout happened. Only Done and Light days carry a place; a gym day aims for a full hour.
+export const PLACES = {chocozap:"chocoZAP",gym:"Other gym",home:"Home",commute:"Commute",outside:"Outside"};
+export const GYMS = ["chocozap","gym"];
+export const GYM_GOAL = 60;
+export const isGymHour = e => !!e && GYMS.includes(e.where) && (+e.m || 0) >= GYM_GOAL;
+// A one-hour gym visit, built from machines most gyms (chocoZAP included) have. Equipment varies by branch.
+export const GYM_HOUR = [["10 min", "Warm up", "Bike or treadmill at an easy pace, then 10 slow bodyweight squats."], ["35 min", "Machine circuit", "Leg press, chest press, lat pulldown, shoulder press, leg curl or extension, ab machine: 3 sets of 10 to 12 each, about a minute's rest between sets. Pick a weight where the last 2 reps are hard."], ["10 min", "Steady cardio", "Bike or treadmill, breathing hard but able to talk."], ["5 min", "Stretch", "Thighs, hips, chest and shoulders, 30 seconds each."]];
+// On the way home in office clothes: no sweat, no change of clothes, nothing that looks odd on a platform.
+export const COMMUTE_MOVES = [["Get off one stop early", "Walk the rest briskly, 10 to 15 minutes. The biggest win of the list."], ["Stairs, not escalators", "Every staircase, one step at a time in leather soles; hold the rail."], ["Calf raises while you wait", "On the platform or at a crossing: up slowly, down slowly, 2 sets of 15."], ["Stand tall on the train", "Light grip on the strap, shoulders back and down, tummy gently braced; switch the bag between hands each station."], ["Quiet squeezes", "Glutes for 10 seconds, or press your palms together at chest height, 5 times. Nobody can tell."], ["Last stretch home", "Walk the final 5 minutes at your fastest comfortable pace."]];
 export const STAGES = [
  ["Weeks 1–2","Hold 3 s, relax 3 s","10 reps, 3 times a day","Learn your arousal scale. Stop fully at 7–8, wait until it drops to about 4, then continue."],
  ["Weeks 3–4","Hold 5 s, relax 5 s","12 reps, 3 times a day","Slow down or change angle at 7 instead of stopping. Add slow belly breathing."],

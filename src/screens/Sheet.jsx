@@ -1,6 +1,6 @@
 import React from "react";
 import { TODAY } from "../env.js";
-import { MONTHS, MOTTOS, DEFAULT_MOTTO, STATES, iso, sameDay, longest, runIdx, runInfo, shiftMonth, daysInMonth, monthKey, weeklyMinutes, fmtDate, pfHelpers } from "../logic.js";
+import { MONTHS, MOTTOS, DEFAULT_MOTTO, STATES, isGymHour, iso, sameDay, longest, runIdx, runInfo, shiftMonth, daysInMonth, monthKey, weeklyMinutes, fmtDate, pfHelpers } from "../logic.js";
 import { ColumnChart } from "./Charts.jsx";
 import { monthOf } from "../store.js";
 import { words } from "../words.js";
@@ -71,9 +71,9 @@ export function Sheet({ state, month: key, onMonth, onSetMonth, onOpenDay, revie
     if (Math.abs(dx) >= 60 && Math.abs(dx) >= 2 * Math.abs(dy)) onMonth(shiftMonth(key, dx < 0 ? 1 : -1)); };
   const md = monthOf(state, key);
   const first = new Date(y, m - 1, 1), daysIn = daysInMonth(key), lead = (first.getDay() + 6) % 7;
-  let trained = 0, totalMin = 0, setsFull = 0, pracN = 0; const seq = [];
+  let trained = 0, totalMin = 0, setsFull = 0, pracN = 0, gymHours = 0; const seq = [];
   for (let d = 1; d <= daysIn; d++) { const e = state.days[iso(new Date(y, m - 1, d))] || {};
-    if (e.s === "done" || e.s === "light") trained++; totalMin += (+e.m || 0); if (e.sets >= 3) setsFull++; if (e.practice === "yes") pracN++;
+    if (e.s === "done" || e.s === "light") trained++; totalMin += (+e.m || 0); if (e.sets >= 3) setsFull++; if (e.practice === "yes") pracN++; if (isGymHour(e)) gymHours++;
     seq.push(e.s === "done" || e.s === "light" ? 1 : e.s === "rest" ? -1 : 0); }
   const target = +md.target || 0;
   const cells = []; for (let i = 0; i < lead; i++) cells.push(null); for (let d = 1; d <= daysIn; d++) cells.push(d); while (cells.length % 7) cells.push(null);
@@ -110,6 +110,7 @@ export function Sheet({ state, month: key, onMonth, onSetMonth, onOpenDay, revie
     <div style={{ ...autoGrid(150), margin: "14px 0" }}>
       <Stat compact value={longest(seq)} label="Longest streak" /><Stat compact value={totalMin} label="Minutes" />
       <Stat compact value={setsFull} label={`Days with 3 ${w.sets.toLowerCase().replace("kegel", "Kegel")}`} /><Stat compact value={pracN} label={`${w.practice} sessions`} />
+      <Stat compact value={gymHours} label="1-hour gym sessions" />
     </div>
     <ColumnChart title="Minutes per week" desc={`Training minutes in each Monday-to-Sunday week of ${MONTHS[m - 1]}.`} unit="Minutes" empty="No minutes logged in these weeks yet."
       data={weeklyMinutes(state.days, key).map(d => ({ key: d.key, label: fmtDate(d.date).slice(4), long: `Week of ${fmtDate(d.date)}`, value: d.value }))} />

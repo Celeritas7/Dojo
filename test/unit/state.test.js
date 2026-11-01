@@ -113,3 +113,11 @@ test("plan controls: repeat week, push back, start again", () => {
   assert.deepEqual(validate(JSON.parse(exportJSON(r))).plan.seq, planSeq(r.plan), "schedule survives a backup");
   assert.throws(() => validate({ version: 2, plan: { start: "2026-10-21", seq: [0, 99] } }), /plan.seq/);
 });
+
+test("where: kept only with Done or Light and a known place; bad values dropped on load", () => {
+  const ed = { s: "done", m: "60", where: "chocozap", run: null, sets: null, practice: null, pauses: "", control: 0, time: "" };
+  assert.deepEqual(saveDay(emptyState(), "2026-11-02", ed).days["2026-11-02"], { s: "done", m: 60, where: "chocozap" });
+  assert.deepEqual(saveDay(emptyState(), "2026-11-02", { ...ed, s: "rest", m: "" }).days["2026-11-02"], { s: "rest" });
+  const v = validate({ version: 2, days: { "2026-11-02": { s: "light", m: 20, where: "commute" }, "2026-11-03": { s: "done", where: "moon" }, "2026-11-04": { s: "missed", where: "gym" } } });
+  assert.deepEqual(v.days, { "2026-11-02": { s: "light", m: 20, where: "commute" }, "2026-11-03": { s: "done" }, "2026-11-04": { s: "missed" } });
+});
