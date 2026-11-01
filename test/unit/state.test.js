@@ -89,8 +89,8 @@ test("updateDay merges without starting the program; settings round-trip and def
   let s = updateDay(emptyState(), "2026-10-28", { s: "done", m: 34 });
   assert.deepEqual(s.days["2026-10-28"], { s: "done", m: 34 }); assert.equal(s.pf.start, null);
   s = setSettings(s, { discreet: true });
-  assert.deepEqual(importJSON(exportJSON(s)).settings, { discreet: true, reminder: { on: false, time: "19:00" } });
-  assert.deepEqual(validate({ version: 2 }).settings, { discreet: false, reminder: { on: false, time: "19:00" } }, "older saves without settings still load");
+  assert.deepEqual(importJSON(exportJSON(s)).settings, { discreet: true, reminder: { on: false, time: "19:00" }, branches: {} });
+  assert.deepEqual(validate({ version: 2 }).settings, { discreet: false, reminder: { on: false, time: "19:00" }, branches: {} }, "older saves without settings still load");
   assert.deepEqual(validate({ version: 2, settings: { reminder: { on: true, time: "25:99" } } }).settings.reminder, { on: true, time: "19:00" }, "bad times fall back");
 });
 
@@ -120,4 +120,10 @@ test("where: kept only with Done or Light and a known place; bad values dropped 
   assert.deepEqual(saveDay(emptyState(), "2026-11-02", { ...ed, s: "rest", m: "" }).days["2026-11-02"], { s: "rest" });
   const v = validate({ version: 2, days: { "2026-11-02": { s: "light", m: 20, where: "commute" }, "2026-11-03": { s: "done", where: "moon" }, "2026-11-04": { s: "missed", where: "gym" } } });
   assert.deepEqual(v.days, { "2026-11-02": { s: "light", m: 20, where: "commute" }, "2026-11-03": { s: "done" }, "2026-11-04": { s: "missed" } });
+});
+
+test("settings.branches: gym keys with text only, capped at 80 characters; retired 'gym' place still loads", () => {
+  const v = validate({ version: 2, settings: { branches: { chocozap: "Shinjuku", anytime: "  ", golds: "Ginza", joyfit: "x".repeat(100) } }, days: { "2026-10-30": { s: "done", m: 60, where: "gym" } } });
+  assert.deepEqual(v.settings.branches, { chocozap: "Shinjuku", joyfit: "x".repeat(80) });
+  assert.equal(v.days["2026-10-30"].where, "gym");
 });

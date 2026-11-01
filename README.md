@@ -2,7 +2,7 @@
 
 A personal training log with three views:
 
-- **Today**: log the day in a few taps (workout and where: chocoZAP, another gym, home, commute or outside; running-plan day, sets, practice) and see this week. Gym days count down to a full hour, and Ideas has a 1-hour gym session and moves for the way home in office clothes.
+- **Today**: log the day in a few taps (workout and where: chocoZAP, Anytime Fitness, JOYFIT24, home, commute or outside; running-plan day, sets, practice) and see this week. Gym days count down to a full hour, and Ideas has the gym options (fees, showers, lockers, clothes rules, your nearest branch), a packing list, a 1-hour gym session and moves for the way home in office clothes.
 - **Month**: the calendar, monthly figures, and a month review (goal, target, notes).
 - **Programs**: the 21-day run/walk plan and the pelvic-floor program.
 

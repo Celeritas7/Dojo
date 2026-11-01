@@ -84,7 +84,7 @@ export function App() {
     {update && <Banner text="A new version of Dojo is ready." action="Reload" onAction={update} onDismiss={() => setUpdate(null)} />}
     {nudge && !state.days[iso(TODAY)] && <Banner text="Nothing logged yet today." action={view === "today" ? null : "Log today"} onAction={() => go({ view: "today" })} onDismiss={() => setNudge(false)} />}
     <main id="panel" role="tabpanel" aria-labelledby={`tab-${view}`}>
-      {view === "today" ? <Today state={state} update={(k, patch) => apply(s => updateDay(s, k, patch))} updatePf={onPf} toggleRun={onToggleRun} onPlanAction={onPlanAction} onOpenDay={setEditing} onGo={go} />
+      {view === "today" ? <Today state={state} update={(k, patch) => apply(s => updateDay(s, k, patch))} updatePf={onPf} toggleRun={onToggleRun} onPlanAction={onPlanAction} onOpenDay={setEditing} onGo={go} onBranch={(g, v) => apply(s => setSettings(s, { branches: { ...(s.settings.branches || {}), [g]: v } }))} />
         : view === "month" ? <Sheet state={state} month={route.month} onMonth={m => go({ month: m })} onSetMonth={patch => apply(s => setMonth(s, route.month, patch))} onOpenDay={setEditing} reviewOpen={reviewOpen} onReviewToggle={setReviewOpen} />
         : <ProgramsView state={state} sub={route.sub} onSub={sub => go({ sub })} setPlan={patch => apply(s => setPlan(s, patch))} setPf={patch => apply(s => setPf(s, patch))} toggleRun={onToggleRun} onPlanAction={onPlanAction} />}
     </main>

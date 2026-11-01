@@ -1,6 +1,6 @@
 import React from "react";
 import { TODAY } from "../env.js";
-import { STATES, PLACES, parseISO, fmtDate, runIdx, runInfo, planLine, pfHelpers } from "../logic.js";
+import { STATES, PLACES, PLACE_CHOICES, parseISO, fmtDate, runIdx, runInfo, planLine, pfHelpers } from "../logic.js";
 import { words } from "../words.js";
 import { Dialog, DialogSection, StateGrid, Pill, Field } from "../components.js";
 
@@ -26,7 +26,7 @@ export function DayEditor({ state, dayKey: k, onClose, onSave, onClear }) {
       <Field label="Minutes" as="number" min={0} max={600} inputMode="numeric" value={ed.m} onChange={ev => setEd({ ...ed, m: ev.target.value })} placeholder="e.g. 30" />
       {(ed.s === "done" || ed.s === "light") && <div role="group" aria-labelledby="ed-where" style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8, fontSize: "var(--text-small)", color: "var(--ink-2)" }}>
         <span id="ed-where">Where</span>
-        <div style={pills}>{Object.entries(PLACES).map(([v, l]) => <Pill key={v} pressed={ed.where === v} onClick={() => setEd({ ...ed, where: ed.where === v ? null : v })}>{l}</Pill>)}</div>
+        <div style={pills}>{(ed.where && !PLACE_CHOICES.includes(ed.where) ? [...PLACE_CHOICES, ed.where] : PLACE_CHOICES).map(v => <Pill key={v} pressed={ed.where === v} onClick={() => setEd({ ...ed, where: ed.where === v ? null : v })}>{PLACES[v]}</Pill>)}</div>
       </div>}</DialogSection>
     <DialogSection title={w.sets}><div role="group" aria-label={w.sets} style={pills}>{[0, 1, 2, 3].map(n => <Pill key={n} pressed={ed.sets === n} onClick={() => setEd({ ...ed, sets: n })}>{n}</Pill>)}</div></DialogSection>
     <DialogSection title={<>{test ? `${w.test} (week ${test.week})` : w.practice}{!planned && <span style={{ fontWeight: 400, color: "var(--ink-2)", fontSize: "var(--text-small)" }}> (not a planned day)</span>}</>}>

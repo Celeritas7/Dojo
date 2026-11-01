@@ -6,16 +6,16 @@
 //   pf:     { start: "YYYY-MM-DD" | null, pdays: number[] },          // practice weekdays, 0 = Sunday
 //   days:   { "YYYY-MM-DD": { s?, m?, where?, run?, sets?, practice?, pauses?, control?, time? } },  // where: a PLACES key, only with s done/light
 //   months: { "YYYY-MM": { goal, target, routines, notes } },
-//   settings: { discreet: boolean, reminder: { on: boolean, time: "HH:MM" } } // optional in saved data; defaults below
+//   settings: { discreet: boolean, reminder: { on: boolean, time: "HH:MM" }, branches: { [gym key]: string } } // optional in saved data; defaults below
 // }
-import { monthKey, PLACES } from "./logic.js";
+import { monthKey, PLACES, GYMS } from "./logic.js";
 
 export const VERSION = 2;
 export const STORAGE_KEY = "dojo.state";
 const DAY_FIELDS = ["s", "m", "where", "run", "sets", "practice", "pauses", "control", "time"];
 
 export const emptyMonth = () => ({ goal: "", target: "", routines: 0, notes: "" });
-export const emptyState = () => ({ version: VERSION, plan: { start: null, recovery: false }, pf: { start: null, pdays: [1, 3, 5, 0] }, days: {}, months: {}, settings: { discreet: false, reminder: { on: false, time: "19:00" } } });
+export const emptyState = () => ({ version: VERSION, plan: { start: null, recovery: false }, pf: { start: null, pdays: [1, 3, 5, 0] }, days: {}, months: {}, settings: { discreet: false, reminder: { on: false, time: "19:00" }, branches: {} } });
 export const monthOf = (state, key) => state.months[key] || emptyMonth();
 // A day record only keeps meaningful values: no empty strings, zeros, nulls or false.
 // Exception: `sets` keeps 0, because "0 sets today" is an answer and "not answered" is the absence of the field.
@@ -32,7 +32,9 @@ export function validate(input) {
   if (input.pf && typeof input.pf === "object") { if (input.pf.start !== null && input.pf.start !== undefined && !isKey(input.pf.start)) throw new Error("pf.start must be a date."); s.pf = { start: input.pf.start || null, pdays: Array.isArray(input.pf.pdays) ? input.pf.pdays.filter(n => Number.isInteger(n) && n >= 0 && n <= 6) : s.pf.pdays }; }
   if (input.days && typeof input.days === "object") for (const [k, v] of Object.entries(input.days)) { if (!isKey(k) || !v || typeof v !== "object") throw new Error(`Bad day entry: ${k}`); const rec = cleanDay(v); if (rec.where && !(PLACES[rec.where] && (rec.s === "done" || rec.s === "light"))) delete rec.where; if (Object.keys(rec).length) s.days[k] = rec; }
   if (input.settings && typeof input.settings === "object") { const r = input.settings.reminder || {};
-    s.settings = { discreet: !!input.settings.discreet, reminder: { on: !!r.on, time: /^([01]\d|2[0-3]):[0-5]\d$/.test(r.time || "") ? r.time : "19:00" } }; }
+    const b = input.settings.branches && typeof input.settings.branches === "object" ? input.settings.branches : {};
+    s.settings = { discreet: !!input.settings.discreet, reminder: { on: !!r.on, time: /^([01]\d|2[0-3]):[0-5]\d$/.test(r.time || "") ? r.time : "19:00" },
+      branches: Object.fromEntries(GYMS.filter(g => typeof b[g] === "string" && b[g].trim()).map(g => [g, b[g].slice(0, 80)])) }; }
   if (input.months && typeof input.months === "object") for (const [k, v] of Object.entries(input.months)) { if (!isMonth(k) || !v || typeof v !== "object") throw new Error(`Bad month entry: ${k}`); s.months[k] = { ...emptyMonth(), goal: String(v.goal || ""), target: String(v.target || ""), routines: +v.routines || 0, notes: String(v.notes || "") }; }
   return s;
 }
