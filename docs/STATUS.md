@@ -5,7 +5,7 @@ Last updated: 29 Oct 2026, after Phase 5 and the "Start today" change. Live at t
 ## Where things stand
 
 - Six phases done (see `docs/design/phase*-spec.md` and the reviews beside them): foundations, core fixes, visual system, accessibility audit, Today / Month / Programs structure, plan controls and charts, installable offline app.
-- 53 tests (`npm test`): 28 unit, 25 browser (Playwright), including axe WCAG 2.1 AA on every view in both themes, offline reload, update prompt, reminder timing and a first-load budget.
+- 54 tests (`npm test`): 29 unit, 25 browser (Playwright), including axe WCAG 2.1 AA on every view in both themes, offline reload, update prompt, reminder timing and a first-load budget.
 - CI (`.github/workflows/ci.yml`) is green on `main`. It fails on a stale committed build, a failing test or a budget overrun.
 - `docs/design/handoff.md` is the living spec: tokens, components, states, breakpoints, rules and which test protects each.
 
@@ -22,6 +22,10 @@ Last updated: 29 Oct 2026, after Phase 5 and the "Start today" change. Live at t
 - The 21-day running plan is fixed; the schedule can be repeated, pushed back or restarted, but not edited.
 - Discreet mode is off by default (`settings.discreet`).
 - No real screen-reader pass yet (VoiceOver / NVDA); automated checks only.
+
+## Open items
+
+- Gym options: add the nearest chocoZAP / Anytime Fitness / JOYFIT24 branches once the office station is known (the app has a "Your branch" field per chain). The chocoZAP facility facts come from reviews (Oct 2026) and are marked unverified until checked in the chocoZAP app.
 
 ## Candidates for next
 

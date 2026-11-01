@@ -1,6 +1,6 @@
 import React from "react";
 import { TODAY } from "../env.js";
-import { MOTTOS, DEFAULT_MOTTO, STATES, PLACES, GYMS, GYM_GOAL, GYM_HOUR, COMMUTE_MOVES, STAGES, PLAN_DAYS, iso, addDays, fmtDate, parseISO, monthKey, runIdx, runInfo, planLine, planPos, planSeq, isRepeat, currentStreak, pfHelpers } from "../logic.js";
+import { MOTTOS, DEFAULT_MOTTO, STATES, PLACES, PLACE_CHOICES, GYMS, GYM_GOAL, GYM_HOUR, COMMUTE_MOVES, GYM_INFO, GYMS_CHECKED, GYM_PACK, GYM_SOURCES, STAGES, PLAN_DAYS, iso, addDays, fmtDate, parseISO, monthKey, runIdx, runInfo, planLine, planPos, planSeq, isRepeat, currentStreak, pfHelpers } from "../logic.js";
 import { words } from "../words.js";
 import { useBreakpoint } from "../layout.js";
 import { dayCell, onCalendarKey } from "./Sheet.jsx";
@@ -13,8 +13,11 @@ const h3 = { font: "700 var(--text-subhead)/1.2 var(--font-display)", letterSpac
 const hint = { color: "var(--ink-2)", fontSize: "var(--text-small)", margin: "0 0 10px" };
 const row = { display: "flex", gap: 6, flexWrap: "wrap" };
 
+// Place buttons: the current choices, plus a retired place if this day already has one.
+const placeKeys = where => (where && !PLACE_CHOICES.includes(where) ? [...PLACE_CHOICES, where] : PLACE_CHOICES);
+
 // Home screen: today's workout, plan day, sets and practice as rows that save as they are tapped, then this week.
-export function Today({ state, update, updatePf, toggleRun, onPlanAction, onOpenDay, onGo }) {
+export function Today({ state, update, updatePf, toggleRun, onPlanAction, onOpenDay, onGo, onBranch }) {
   const phone = useBreakpoint() === "phone";
   const w = words(state);
   const e = state.days[K] || {};
@@ -57,7 +60,7 @@ export function Today({ state, update, updatePf, toggleRun, onPlanAction, onOpen
       {e.s && e.s !== "missed" && <Field label="Minutes" as="number" min={0} max={600} inputMode="numeric" value={e.m || ""} onChange={ev => update(K, { m: +ev.target.value || undefined })} placeholder="e.g. 30" inputStyle={{ width: 120 }} />}
       {active && <div role="group" aria-labelledby="t-where" style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 10, fontSize: "var(--text-small)", color: "var(--ink-2)" }}>
         <span id="t-where">Where</span>
-        <div style={row}>{Object.entries(PLACES).map(([v, l]) => <Pill key={v} pressed={e.where === v} onClick={() => update(K, { where: e.where === v ? undefined : v })}>{l}</Pill>)}</div>
+        <div style={row}>{placeKeys(e.where).map(v => <Pill key={v} pressed={e.where === v} onClick={() => update(K, { where: e.where === v ? undefined : v })}>{PLACES[v]}</Pill>)}</div>
       </div>}
       {active && gym && <p style={{ ...hint, margin: "8px 0 0", color: "var(--ink)", fontWeight: 600 }}>{toGo > 0 ? `${toGo} min to go for a full hour.` : "Full hour done."}</p>}
     </section>
@@ -110,8 +113,22 @@ export function Today({ state, update, updatePf, toggleRun, onPlanAction, onOpen
 
     <section aria-labelledby="t-ideas" style={{ marginTop: 18 }}>
       <h3 id="t-ideas" style={h3}>Ideas</h3>
+      <Details summary="Gym options" open={!!howTo.options} onToggle={v => openHow("options", v)} style={{ marginTop: 12 }}>
+        <p style={hint}>Budget chains for training straight from the office. Checked {GYMS_CHECKED}; fees and facilities change and differ by branch, so check your branch before you join.</p>
+        {GYM_INFO.map(g => <section key={g.key} aria-labelledby={`gym-${g.key}`} style={{ borderTop: "1px solid var(--line)", padding: "10px 0" }}>
+          <h4 id={`gym-${g.key}`} style={{ font: "700 var(--text-body)/1.2 var(--font-display)", letterSpacing: ".01em", margin: "0 0 6px" }}>{g.name}{g.unverified && <span style={{ font: "400 var(--text-small) var(--font-body)", color: "var(--ink-2)" }}> · from reviews; confirm in the app's branch page</span>}</h4>
+          <dl style={{ display: "grid", gridTemplateColumns: "max-content minmax(0,1fr)", gap: "2px 12px", margin: "0 0 6px", fontSize: "var(--text-small)" }}>{g.rows.map(([k, v]) => <React.Fragment key={k}><dt style={{ color: "var(--ink-2)" }}>{k}</dt><dd style={{ margin: 0 }}>{v}</dd></React.Fragment>)}</dl>
+          <ul style={{ margin: "0 0 8px", paddingLeft: 20, fontSize: "var(--text-small)" }}>{g.notes.map(n => <li key={n}>{n}</li>)}</ul>
+          <Field label={`Your ${g.name} branch`} value={(state.settings.branches || {})[g.key] || ""} onChange={ev => onBranch(g.key, ev.target.value)} placeholder="Not set yet: nearest to your office" />
+        </section>)}
+        <p style={{ ...hint, margin: "6px 0 4px" }}>Sources</p>
+        <ul style={{ margin: 0, paddingLeft: 20, fontSize: "var(--text-small)" }}>{GYM_SOURCES.map(([t, u]) => <li key={u}><a href={u} target="_blank" rel="noopener noreferrer">{t}</a></li>)}</ul>
+      </Details>
+      <Details summary="What to pack (chocoZAP, no shower)" open={!!howTo.pack} onToggle={v => openHow("pack", v)} style={{ marginTop: 12 }}>
+        <ul style={{ margin: 0, paddingLeft: 20 }}>{GYM_PACK.map(t => <li key={t}>{t}</li>)}</ul>
+      </Details>
       <Details summary="A 1-hour gym session" open={!!howTo.gym} onToggle={v => openHow("gym", v)} style={{ marginTop: 12 }}>
-        <p style={hint}>chocoZAP lets you train in everyday clothes and shoes, so you can go straight from work. Use whichever machines your branch has.</p>
+        <p style={hint}>Change into your T-shirt and trainers first; chocoZAP allows office clothes, but Anytime Fitness and JOYFIT24 may require training wear and indoor shoes. Use whichever machines your branch has.</p>
         <ol style={{ margin: 0, paddingLeft: 20 }}>{GYM_HOUR.map(([t, title, how]) => <li key={title} style={{ marginBottom: 6 }}><b>{title}</b> ({t}). {how}</li>)}</ol>
       </Details>
       <Details summary="On the way home, in office clothes" open={!!howTo.commute} onToggle={v => openHow("commute", v)} style={{ marginTop: 12 }}>

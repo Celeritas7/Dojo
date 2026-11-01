@@ -285,7 +285,14 @@ test("gym: Where shows after Done, a gym counts down to an hour, Month counts 1-
   await page.getByRole("button", { name: "Rest day", exact: true }).click();
   assert.equal((await stored(page)).days["2026-11-02"].where, undefined, "a rest day has no place");
   await page.getByRole("button", { name: "Workout done", exact: true }).click();
-  await page.getByRole("button", { name: "Other gym", exact: true }).click();
+  await page.getByRole("button", { name: "JOYFIT24", exact: true }).click();
+  assert.equal((await stored(page)).days["2026-11-02"].where, "joyfit");
+  assert.equal(await page.getByRole("button", { name: "Other gym", exact: true }).count(), 0, "retired place not offered");
+  await page.locator("summary", { hasText: "Gym options" }).click();
+  await page.locator("text=Indoor training shoes required").waitFor();
+  await page.getByLabel("Your chocoZAP branch").fill("Shinjuku 3-chome");
+  await page.locator("summary", { hasText: "What to pack" }).click();
+  await page.locator("text=Small combination lock for the bag zip").waitFor();
   await page.locator("summary", { hasText: "A 1-hour gym session" }).click();
   await page.locator("text=Machine circuit").waitFor();
   await page.locator("summary", { hasText: "On the way home, in office clothes" }).click();
@@ -297,6 +304,13 @@ test("gym: Where shows after Done, a gym counts down to an hour, Month counts 1-
   await page.screenshot({ path: join(SHOTS, "phone-today-gym.png"), fullPage: true });
   await page.getByRole("tab", { name: "Month" }).click();
   assert.equal(await page.locator("text=1-hour gym sessions").locator("..").innerText().then(t => /\b1\b/.test(t)), true);
+  assert.deepEqual((await stored(page)).settings.branches, { chocozap: "Shinjuku 3-chome" });
+  // A day logged before the gym list changed keeps its "Other gym" and shows it.
+  await page.evaluate(() => { const st = JSON.parse(localStorage.getItem("dojo.state")); st.days["2026-11-02"].where = "gym"; localStorage.setItem("dojo.state", JSON.stringify(st)); });
+  await page.goto(base + "/?today=2026-11-02#today"); await page.reload(); await page.waitForSelector("#panel h2");
+  assert.equal(await page.getByRole("button", { name: "Other gym", exact: true }).getAttribute("aria-pressed"), "true");
+  await page.locator("summary", { hasText: "Gym options" }).click();
+  assert.equal(await page.getByLabel("Your chocoZAP branch").inputValue(), "Shinjuku 3-chome", "branch survives a reload");
   await ctx.close();
 });
 

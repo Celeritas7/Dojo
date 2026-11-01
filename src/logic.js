@@ -17,12 +17,26 @@ export const PLAN_RUNS = PLAN.filter(p => p[0] === "run" || p[0] === "finish").l
 export const WEEKS = [["Week 1","Build the habit"],["Week 2","Longer intervals"],["Week 3","Toward non-stop"]];
 export const STATES = {done:"Workout done",light:"Light / partial",rest:"Rest day",missed:"Missed"};
 // Where a workout happened. Only Done and Light days carry a place; a gym day aims for a full hour.
-export const PLACES = {chocozap:"chocoZAP",gym:"Other gym",home:"Home",commute:"Commute",outside:"Outside"};
-export const GYMS = ["chocozap","gym"];
+// "gym" (Other gym) is no longer offered but still reads for days logged with it.
+export const PLACES = {chocozap:"chocoZAP",anytime:"Anytime Fitness",joyfit:"JOYFIT24",home:"Home",commute:"Commute",outside:"Outside",gym:"Other gym"};
+export const PLACE_CHOICES = ["chocozap","anytime","joyfit","home","commute","outside"];
+export const GYMS = ["chocozap","anytime","joyfit","gym"];
 export const GYM_GOAL = 60;
 export const isGymHour = e => !!e && GYMS.includes(e.where) && (+e.m || 0) >= GYM_GOAL;
-// A one-hour gym visit, built from machines most gyms (chocoZAP included) have. Equipment varies by branch.
-export const GYM_HOUR = [["10 min", "Warm up", "Bike or treadmill at an easy pace, then 10 slow bodyweight squats."], ["35 min", "Machine circuit", "Leg press, chest press, lat pulldown, shoulder press, leg curl or extension, ab machine: 3 sets of 10 to 12 each, about a minute's rest between sets. Pick a weight where the last 2 reps are hard."], ["10 min", "Steady cardio", "Bike or treadmill, breathing hard but able to talk."], ["5 min", "Stretch", "Thighs, hips, chest and shoulders, 30 seconds each."]];
+// Budget chains for training straight from the office. Researched 1 Nov 2026; fees and facilities change and differ by branch.
+export const GYMS_CHECKED = "1 Nov 2026";
+export const GYM_INFO = [
+  { key: "chocozap", name: "chocoZAP", unverified: true, rows: [["Monthly", "3,278 yen"], ["Joining", "0 yen on campaign (normally 5,000 yen)"], ["Shower", "No"], ["Lockers", "Open shelves, no key"], ["Changing", "Shared private booth (unisex)"], ["Clothes", "Everyday clothes and outdoor shoes allowed"]],
+    notes: ["15 min per strength machine, 1 hour per cardio machine.", "No food. Wipe each machine after use.", "Unstaffed: lost items are your own responsibility. Keep valuables on you.", "Toilets can be out of order for a long time.", "Wear trainers on the treadmill and leg press: leather soles slip."] },
+  { key: "anytime", name: "Anytime Fitness", rows: [["Monthly", "About 7,000–10,000 yen (by branch)"], ["Joining", "5,500 yen"], ["Shower", "Yes, private rooms (bring towel and shampoo)"], ["Lockers", "Free ones may have no key; a lockable personal locker is about 1,100 yen a month"], ["Changing", "Private booths"], ["Clothes", "Some branches require training wear: no leather shoes, sandals or heels"]],
+    notes: ["A paid locker also lets you leave trainers and a towel at the gym."] },
+  { key: "joyfit", name: "JOYFIT24", rows: [["Monthly", "About 7,000–10,000 yen; LITE 4,378 yen (one branch) or 6,578 yen (all branches)"], ["Joining", "5,500 yen"], ["Shower", "Depends on the branch and the plan: some LITE plans exclude it"], ["Lockers", "Yes, plus contract lockers at 1,100–1,650 yen a month"], ["Changing", "Yes"], ["Clothes", "Indoor training shoes required"]],
+    notes: ["If you choose it for the shower, check your plan includes shower use."] },
+];
+export const GYM_PACK = ["T-shirt", "Light trainers", "Small towel", "Sweat wipes and deodorant", "Small pouch for phone, wallet and ID", "Small combination lock for the bag zip", "Water bottle", "Plastic bag for the sweaty T-shirt"];
+export const GYM_SOURCES = [["aumo: chocoZAP review (Oct 2026)", "https://aumo.jp/articles/3048124"], ["Appllio: chocoZAP guide (May 2025)", "https://appllio.com/chocozap-service"], ["Business Insider Japan: Anytime vs chocoZAP (Feb 2025)", "https://www.businessinsider.jp/article/2502-anytimefitness-akasaka-business/"], ["Anytime branch page: lockable locker", "https://page.line.me/545yyiur"], ["Anytime branch rules: keyless lockers, no leather shoes", "https://en.gyym.jp/facilities/hyogo/C28108/1291/programs/11394"], ["JOYFIT24 Higashi-Awaji plan change (Mar 2026)", "https://joyfit.jp/higashiawaji/wp-content/uploads/sites/301/2026/03/cc7d0c4cd4ecfa1c0ceb0c5a4710ec12.pdf"], ["JOYFIT24 facility guide: indoor shoes", "https://joyfit.jp/en/akajoy/facility/"]];
+// A one-hour gym visit from machines most gyms have (fits chocoZAP's 15-minute limit per machine). Equipment varies by branch.
+export const GYM_HOUR = [["10 min", "Warm up", "Bike or treadmill at an easy pace (trainers on, not leather soles), then 10 slow bodyweight squats."], ["35 min", "Machine circuit", "Leg press, chest press, lat pulldown, shoulder press, leg curl or extension, ab machine: 3 sets of 10 to 12 each, about a minute's rest between sets, under 15 minutes per machine. Pick a weight where the last 2 reps are hard."], ["10 min", "Steady cardio", "Bike or treadmill, breathing hard but able to talk."], ["5 min", "Stretch", "Thighs, hips, chest and shoulders, 30 seconds each."]];
 // On the way home in office clothes: no sweat, no change of clothes, nothing that looks odd on a platform.
 export const COMMUTE_MOVES = [["Get off one stop early", "Walk the rest briskly, 10 to 15 minutes. The biggest win of the list."], ["Stairs, not escalators", "Every staircase, one step at a time in leather soles; hold the rail."], ["Calf raises while you wait", "On the platform or at a crossing: up slowly, down slowly, 2 sets of 15."], ["Stand tall on the train", "Light grip on the strap, shoulders back and down, tummy gently braced; switch the bag between hands each station."], ["Quiet squeezes", "Glutes for 10 seconds, or press your palms together at chest height, 5 times. Nobody can tell."], ["Last stretch home", "Walk the final 5 minutes at your fastest comfortable pace."]];
 export const STAGES = [
