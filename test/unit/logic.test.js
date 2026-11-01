@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { iso, parseISO, shiftMonth, daysInMonth, longest, runIdx, runKey, runInfo, planDone, pfHelpers, PLAN_DAYS, PLAN_RUNS, fmtDate } from "../../src/logic.js";
+import { iso, parseISO, shiftMonth, daysInMonth, longest, runIdx, runKey, runInfo, planDone, pfHelpers, PLAN_DAYS, PLAN_RUNS, fmtDate, isGymHour } from "../../src/logic.js";
 import { emptyState } from "../../src/store.js";
 
 test("iso/parseISO round-trip in local time", () => {
@@ -123,4 +123,12 @@ test("reminder is due after the chosen time when nothing is logged, once a day",
   assert.equal(reminderDue(st(false), at(20, 0), null), false, "off");
   assert.equal(reminderDue(st(true, { "2026-10-28": { sets: 0 } }), at(20, 0), null), false, "something logged");
   assert.equal(reminderDue(st(true), at(20, 0), "2026-10-28"), false, "already reminded today");
+});
+
+test("isGymHour: a gym place and at least 60 minutes", () => {
+  assert.equal(isGymHour({ s: "done", m: 60, where: "chocozap" }), true);
+  assert.equal(isGymHour({ s: "done", m: 75, where: "gym" }), true);
+  assert.equal(isGymHour({ s: "done", m: 59, where: "chocozap" }), false);
+  assert.equal(isGymHour({ s: "done", m: 90, where: "home" }), false);
+  assert.equal(isGymHour(undefined), false);
 });

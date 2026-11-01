@@ -1,13 +1,13 @@
 import React from "react";
 import { TODAY } from "../env.js";
-import { STATES, parseISO, fmtDate, runIdx, runInfo, planLine, pfHelpers } from "../logic.js";
+import { STATES, PLACES, parseISO, fmtDate, runIdx, runInfo, planLine, pfHelpers } from "../logic.js";
 import { words } from "../words.js";
 import { Dialog, DialogSection, StateGrid, Pill, Field } from "../components.js";
 
 export function DayEditor({ state, dayKey: k, onClose, onSave, onClear }) {
   const date = parseISO(k), e = state.days[k] || {};
   const ri = runIdx(date, state.plan);
-  const [ed, setEd] = React.useState({ s: e.s || null, m: e.m || "", run: ri >= 0 ? !!e.run : null, sets: e.sets ?? null, practice: e.practice ?? null, pauses: e.pauses || "", control: e.control || 0, time: e.time || "" });
+  const [ed, setEd] = React.useState({ s: e.s || null, m: e.m || "", where: e.where || null, run: ri >= 0 ? !!e.run : null, sets: e.sets ?? null, practice: e.practice ?? null, pauses: e.pauses || "", control: e.control || 0, time: e.time || "" });
   const [error, setError] = React.useState("");
   const minutesNeedStatus = !ed.s && +ed.m > 0;
   const save = () => { if (minutesNeedStatus) { setError("Choose Done, Light, Rest or Missed to save these minutes."); return; } onSave(k, ed); };
@@ -23,7 +23,11 @@ export function DayEditor({ state, dayKey: k, onClose, onSave, onClear }) {
       <div role="group" aria-label={`Running plan, day ${ri + 1}`} style={pills}><Pill pressed={ed.run === true} onClick={() => setRun(true)}>Done</Pill><Pill pressed={ed.run === false} onClick={() => setRun(false)}>Not yet</Pill></div></DialogSection>}
     <DialogSection title="Exercise" first={!info}>
       <StateGrid value={ed.s} onChange={v => { setEd({ ...ed, s: v }); setError(""); }} options={Object.entries(STATES).map(([value, label]) => ({ value, label }))} />
-      <Field label="Minutes" as="number" min={0} max={600} inputMode="numeric" value={ed.m} onChange={ev => setEd({ ...ed, m: ev.target.value })} placeholder="e.g. 30" /></DialogSection>
+      <Field label="Minutes" as="number" min={0} max={600} inputMode="numeric" value={ed.m} onChange={ev => setEd({ ...ed, m: ev.target.value })} placeholder="e.g. 30" />
+      {(ed.s === "done" || ed.s === "light") && <div role="group" aria-labelledby="ed-where" style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8, fontSize: "var(--text-small)", color: "var(--ink-2)" }}>
+        <span id="ed-where">Where</span>
+        <div style={pills}>{Object.entries(PLACES).map(([v, l]) => <Pill key={v} pressed={ed.where === v} onClick={() => setEd({ ...ed, where: ed.where === v ? null : v })}>{l}</Pill>)}</div>
+      </div>}</DialogSection>
     <DialogSection title={w.sets}><div role="group" aria-label={w.sets} style={pills}>{[0, 1, 2, 3].map(n => <Pill key={n} pressed={ed.sets === n} onClick={() => setEd({ ...ed, sets: n })}>{n}</Pill>)}</div></DialogSection>
     <DialogSection title={<>{test ? `${w.test} (week ${test.week})` : w.practice}{!planned && <span style={{ fontWeight: 400, color: "var(--ink-2)", fontSize: "var(--text-small)" }}> (not a planned day)</span>}</>}>
       <div role="group" aria-label={`${test ? w.test : w.practice} done`} style={pills}><Pill pressed={ed.practice === "yes"} onClick={() => setEd({ ...ed, practice: "yes" })}>Yes</Pill><Pill pressed={ed.practice === "no"} onClick={() => setEd({ ...ed, practice: "no" })}>No</Pill></div>

@@ -1,10 +1,10 @@
 import React from "react";
 import { TODAY } from "../env.js";
-import { MOTTOS, DEFAULT_MOTTO, STATES, STAGES, PLAN_DAYS, iso, addDays, fmtDate, parseISO, monthKey, runIdx, runInfo, planLine, planPos, planSeq, isRepeat, currentStreak, pfHelpers } from "../logic.js";
+import { MOTTOS, DEFAULT_MOTTO, STATES, PLACES, GYMS, GYM_GOAL, GYM_HOUR, COMMUTE_MOVES, STAGES, PLAN_DAYS, iso, addDays, fmtDate, parseISO, monthKey, runIdx, runInfo, planLine, planPos, planSeq, isRepeat, currentStreak, pfHelpers } from "../logic.js";
 import { words } from "../words.js";
 import { useBreakpoint } from "../layout.js";
 import { dayCell, onCalendarKey } from "./Sheet.jsx";
-import { Motto, StateGrid, Field, Pill, Button, SheetCell, DowHeader, HabitDot } from "../components.js";
+import { Motto, StateGrid, Field, Pill, Button, SheetCell, DowHeader, HabitDot, Details } from "../components.js";
 
 const K = iso(TODAY);
 const LONG_DATE = TODAY.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
@@ -22,8 +22,11 @@ export function Today({ state, update, updatePf, toggleRun, onPlanAction, onOpen
 
   // Workout
   const ri = runIdx(TODAY, state.plan), info = ri >= 0 ? runInfo(ri, state.plan.recovery) : null;
-  const setStatus = s => s === e.s ? update(K, { s: undefined, m: undefined })
-    : update(K, { s, m: e.m || (s === "done" && info && info.mins ? info.mins : undefined) });
+  const setStatus = s => s === e.s ? update(K, { s: undefined, m: undefined, where: undefined })
+    : update(K, { s, m: e.m || (s === "done" && info && info.mins ? info.mins : undefined), where: s === "done" || s === "light" ? e.where : undefined });
+  const active = e.s === "done" || e.s === "light", gym = GYMS.includes(e.where), toGo = GYM_GOAL - (+e.m || 0);
+  const [howTo, setHowTo] = React.useState({});
+  const openHow = (k, v) => setHowTo(x => ({ ...x, [k]: v }));
 
   // Running plan
   const pos = planPos(state.plan, TODAY), daysTo = state.plan.start ? -pos : null;
@@ -52,7 +55,13 @@ export function Today({ state, update, updatePf, toggleRun, onPlanAction, onOpen
       <h3 id="t-workout" style={h3}>Workout</h3>
       <StateGrid value={e.s || null} onChange={setStatus} options={Object.entries(STATES).map(([value, label]) => ({ value, label }))} style={{ gridTemplateColumns: phone ? "1fr 1fr" : "repeat(4,1fr)", marginBottom: e.s ? 10 : 0 }} />
       {e.s && e.s !== "missed" && <Field label="Minutes" as="number" min={0} max={600} inputMode="numeric" value={e.m || ""} onChange={ev => update(K, { m: +ev.target.value || undefined })} placeholder="e.g. 30" inputStyle={{ width: 120 }} />}
+      {active && <div role="group" aria-labelledby="t-where" style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 10, fontSize: "var(--text-small)", color: "var(--ink-2)" }}>
+        <span id="t-where">Where</span>
+        <div style={row}>{Object.entries(PLACES).map(([v, l]) => <Pill key={v} pressed={e.where === v} onClick={() => update(K, { where: e.where === v ? undefined : v })}>{l}</Pill>)}</div>
+      </div>}
+      {active && gym && <p style={{ ...hint, margin: "8px 0 0", color: "var(--ink)", fontWeight: 600 }}>{toGo > 0 ? `${toGo} min to go for a full hour.` : "Full hour done."}</p>}
     </section>
+
 
     {(info || gapDay || (daysTo !== null && daysTo > 0) || !state.plan.start) && <section aria-labelledby="t-run" style={card}>
       <h3 id="t-run" style={h3}>Running plan</h3>
@@ -97,6 +106,18 @@ export function Today({ state, update, updatePf, toggleRun, onPlanAction, onOpen
       <p style={{ margin: "10px 0 0", fontWeight: 600 }}>Current streak: {streak.length} day{streak.length === 1 ? "" : "s"}{streak.since && streak.length > 0 ? `, since ${fmtDate(parseISO(streak.since))}` : ""}.</p>
       {streak.brokenBy && <p style={{ ...hint, margin: "2px 0 0" }}>{streak.length ? "Before that, " : ""}{streak.length ? fmtDate(parseISO(streak.brokenBy.key)) : `${fmtDate(parseISO(streak.brokenBy.key))}`} {streak.brokenBy.reason === "missed" ? "was missed" : "had nothing logged"}. Rest days don't break a streak.</p>}
       <p style={{ ...hint, marginTop: 8 }}>Tap a day to edit it. Older days are under <Button variant="ghost" onClick={() => onGo({ view: "month" })} style={{ padding: "2px 8px", fontSize: "var(--text-small)" }}>Month</Button>.</p>
+    </section>
+
+    <section aria-labelledby="t-ideas" style={{ marginTop: 18 }}>
+      <h3 id="t-ideas" style={h3}>Ideas</h3>
+      <Details summary="A 1-hour gym session" open={!!howTo.gym} onToggle={v => openHow("gym", v)} style={{ marginTop: 12 }}>
+        <p style={hint}>chocoZAP lets you train in everyday clothes and shoes, so you can go straight from work. Use whichever machines your branch has.</p>
+        <ol style={{ margin: 0, paddingLeft: 20 }}>{GYM_HOUR.map(([t, title, how]) => <li key={title} style={{ marginBottom: 6 }}><b>{title}</b> ({t}). {how}</li>)}</ol>
+      </Details>
+      <Details summary="On the way home, in office clothes" open={!!howTo.commute} onToggle={v => openHow("commute", v)} style={{ marginTop: 12 }}>
+        <p style={hint}>No sweat and no change of clothes. Doing most of these adds up to about 20 minutes: log it as Light, Commute.</p>
+        <ul style={{ margin: 0, paddingLeft: 20 }}>{COMMUTE_MOVES.map(([title, how]) => <li key={title} style={{ marginBottom: 6 }}><b>{title}.</b> {how}</li>)}</ul>
+      </Details>
     </section>
   </>;
 }
